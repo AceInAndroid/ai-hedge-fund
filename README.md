@@ -45,6 +45,7 @@ By using this software, you agree to use it solely for learning purposes.
 
 ## Table of Contents
 - [How to Install](#how-to-install)
+- [OpenClaw Skill Install](#openclaw-skill-install)
 - [Environment Configuration](#environment-configuration)
 - [How to Run](#how-to-run)
   - [⌨️ Command Line Interface](#️-command-line-interface)
@@ -80,6 +81,52 @@ The web UI lives in `app/frontend`.
 cd app/frontend
 npm install
 cd ../..
+```
+
+## OpenClaw Skill Install
+
+This repository can also be packaged as an OpenClaw-installable skill.
+
+### Option 1: Install directly into `~/.agents/skills`
+
+```bash
+bash scripts/install-openclaw-skill.sh
+```
+
+This installs the skill to:
+
+```text
+~/.agents/skills/ai-hedge-fund
+```
+
+### Option 2: Generate a distributable package first
+
+```bash
+bash scripts/package-openclaw-skill.sh
+```
+
+The packaged skill directory will be created at:
+
+```text
+dist/openclaw-skill/ai-hedge-fund
+```
+
+You can then copy or symlink it manually:
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R dist/openclaw-skill/ai-hedge-fund ~/.agents/skills/
+```
+
+### OpenClaw Notes
+
+- The packaged skill contains `SKILL.md`, `SKILL.toon`, `agents/openai.yaml`, and the required `references/` files.
+- The installed skill assumes the active workspace is still the `ai-hedge-fund` repository root.
+- Runtime execution still uses this repository's own `scripts/` entrypoints.
+- To expose the skill contract to external controllers, run:
+
+```bash
+bash scripts/export-skill-manifest.sh
 ```
 
 ## Environment Configuration

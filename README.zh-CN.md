@@ -46,6 +46,7 @@
 ## 目录
 
 - [安装方法](#安装方法)
+- [OpenClaw Skill 安装](#openclaw-skill-安装)
 - [环境配置](#环境配置)
 - [使用方法](#使用方法)
   - [⌨️ 命令行](#️-命令行)
@@ -81,6 +82,52 @@ Web 前端位于 `app/frontend`。
 cd app/frontend
 npm install
 cd ../..
+```
+
+## OpenClaw Skill 安装
+
+这个仓库也可以打包成 OpenClaw 可安装的 Skill。
+
+### 方式 1：直接安装到 `~/.agents/skills`
+
+```bash
+bash scripts/install-openclaw-skill.sh
+```
+
+默认会安装到：
+
+```text
+~/.agents/skills/ai-hedge-fund
+```
+
+### 方式 2：先生成可分发安装包
+
+```bash
+bash scripts/package-openclaw-skill.sh
+```
+
+生成后的 Skill 目录在：
+
+```text
+dist/openclaw-skill/ai-hedge-fund
+```
+
+然后可以手动复制或软链接：
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R dist/openclaw-skill/ai-hedge-fund ~/.agents/skills/
+```
+
+### OpenClaw 使用说明
+
+- 打包后的 Skill 包含 `SKILL.md`、`SKILL.toon`、`agents/openai.yaml` 和必需的 `references/` 文件。
+- 安装后的 Skill 默认假设当前工作目录仍然是 `ai-hedge-fund` 仓库根目录。
+- 实际执行仍然调用本仓库自己的 `scripts/` 入口。
+- 如果要把 Skill 接口暴露给外部控制器，可以运行：
+
+```bash
+bash scripts/export-skill-manifest.sh
 ```
 
 ## 环境配置
