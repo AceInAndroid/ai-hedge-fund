@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Hedge Fund Skill"
+  short_description: "Run and extend the local AI hedge fund repo"
+  default_prompt: "Use $ai-hedge-fund to configure providers, run analyses or backtests, and modify this hedge-fund repository safely."
