@@ -33,6 +33,8 @@ def _build_analyst_config(
     data_requirements: list[str],
     best_for: str,
     a_share_readiness: str,
+    analysis_method: str,
+    execution_mode: str,
 ):
     return {
         "display_name": display_name,
@@ -46,6 +48,8 @@ def _build_analyst_config(
         "data_requirements": data_requirements,
         "best_for": best_for,
         "a_share_readiness": a_share_readiness,
+        "analysis_method": analysis_method,
+        "execution_mode": execution_mode,
     }
 
 
@@ -62,6 +66,8 @@ SYSTEM_AGENT_CONFIG = {
         "data_requirements": ["prices", "portfolio"],
         "best_for": "Constraining exposures after analyst signals are generated.",
         "a_share_readiness": "high",
+        "analysis_method": "Estimate volatility and correlation from price history, then cap exposures at the portfolio and ticker level.",
+        "execution_mode": "deterministic",
         "order": 0,
     },
     "portfolio_manager": {
@@ -76,6 +82,8 @@ SYSTEM_AGENT_CONFIG = {
         "data_requirements": ["analyst_signals", "risk_management"],
         "best_for": "Producing the final trade decision after analysts and risk controls finish.",
         "a_share_readiness": "high",
+        "analysis_method": "Synthesize analyst signals and risk limits into final buy, sell, hold, sizing, and rationale decisions.",
+        "execution_mode": "llm_assisted",
         "order": 1,
     },
 }
@@ -93,6 +101,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="Valuation-led stock selection when you already have usable fundamentals.",
         a_share_readiness="medium",
+        analysis_method="Combine growth, reinvestment, risk, DCF assumptions, and relative valuation into a narrative-backed intrinsic value view.",
+        execution_mode="llm_assisted",
     ),
     "ben_graham": _build_analyst_config(
         display_name="Ben Graham",
@@ -105,6 +115,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="Classic value screens on mature businesses with long reporting history.",
         a_share_readiness="medium",
+        analysis_method="Check earnings stability, balance-sheet strength, and low-price multiples to judge whether a margin of safety exists.",
+        execution_mode="llm_assisted",
     ),
     "bill_ackman": _build_analyst_config(
         display_name="Bill Ackman",
@@ -117,6 +129,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="Concentrated long ideas where execution change or rerating matters.",
         a_share_readiness="medium",
+        analysis_method="Review business quality, leverage, and rerating or activism-style upside to estimate concentrated long potential.",
+        execution_mode="llm_assisted",
     ),
     "cathie_wood": _build_analyst_config(
         display_name="Cathie Wood",
@@ -129,6 +143,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="Innovation-heavy growth names where the upside case matters more than near-term stability.",
         a_share_readiness="medium",
+        analysis_method="Score disruptive potential, growth durability, and high-upside valuation scenarios for innovation-led names.",
+        execution_mode="llm_assisted",
     ),
     "charlie_munger": _build_analyst_config(
         display_name="Charlie Munger",
@@ -141,6 +157,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap", "insider_trades", "company_news"],
         best_for="Long-duration compounders where moat and management quality dominate the thesis.",
         a_share_readiness="low",
+        analysis_method="Blend moat strength, management quality, predictability, insider behavior, and news tone into a quality-compounder view.",
+        execution_mode="llm_assisted",
     ),
     "michael_burry": _build_analyst_config(
         display_name="Michael Burry",
@@ -153,6 +171,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap", "insider_trades", "company_news"],
         best_for="Dislocated names where consensus is too negative or the balance sheet is misunderstood.",
         a_share_readiness="low",
+        analysis_method="Stress-test valuation, downside balance-sheet risk, insider activity, and negative sentiment to find contrarian mispricings.",
+        execution_mode="llm_assisted",
     ),
     "mohnish_pabrai": _build_analyst_config(
         display_name="Mohnish Pabrai",
@@ -165,6 +185,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="Simple, asymmetric value ideas with clear downside protection.",
         a_share_readiness="medium",
+        analysis_method="Look for low downside, strong cash generation, and realistic doubling potential in concentrated value setups.",
+        execution_mode="llm_assisted",
     ),
     "peter_lynch": _build_analyst_config(
         display_name="Peter Lynch",
@@ -177,6 +199,8 @@ ANALYST_CONFIG = {
         data_requirements=["line_items", "market_cap", "insider_trades", "company_news"],
         best_for="Everyday businesses with visible expansion and reasonable valuation.",
         a_share_readiness="low",
+        analysis_method="Assess understandable business growth, PEG-style valuation, insider behavior, and news tone to find practical compounders.",
+        execution_mode="llm_assisted",
     ),
     "phil_fisher": _build_analyst_config(
         display_name="Phil Fisher",
@@ -189,6 +213,8 @@ ANALYST_CONFIG = {
         data_requirements=["line_items", "market_cap", "insider_trades", "company_news"],
         best_for="High-quality growth names where management and execution matter heavily.",
         a_share_readiness="low",
+        analysis_method="Use quality, margin stability, management efficiency, insider actions, and news context to approximate a scuttlebutt-style thesis.",
+        execution_mode="llm_assisted",
     ),
     "rakesh_jhunjhunwala": _build_analyst_config(
         display_name="Rakesh Jhunjhunwala",
@@ -201,6 +227,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="Domestic growth stories and emerging-market style compounding opportunities.",
         a_share_readiness="medium",
+        analysis_method="Review growth, profitability, cash flow, and management decisions to identify emerging-market style compounders.",
+        execution_mode="llm_assisted",
     ),
     "stanley_druckenmiller": _build_analyst_config(
         display_name="Stanley Druckenmiller",
@@ -213,6 +241,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap", "insider_trades", "company_news", "prices"],
         best_for="Names where momentum, narrative, and asymmetric payoff matter together.",
         a_share_readiness="medium",
+        analysis_method="Combine fundamentals, recent momentum, insider activity, and news flow into a macro-style asymmetric opportunity view.",
+        execution_mode="llm_assisted",
     ),
     "warren_buffett": _build_analyst_config(
         display_name="Warren Buffett",
@@ -225,6 +255,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="Wide-moat businesses with durable returns and disciplined valuation.",
         a_share_readiness="medium",
+        analysis_method="Evaluate moat, consistency, pricing power, book value growth, and management quality to judge fair-value compounders.",
+        execution_mode="llm_assisted",
     ),
     "technical_analyst": _build_analyst_config(
         display_name="Technical Analyst",
@@ -237,6 +269,8 @@ ANALYST_CONFIG = {
         data_requirements=["prices"],
         best_for="Price-led screening, fast market checks, and A-share runs with only historical bars.",
         a_share_readiness="high",
+        analysis_method="Compute trend, momentum, mean reversion, and volatility signals directly from historical prices.",
+        execution_mode="deterministic",
     ),
     "fundamentals_analyst": _build_analyst_config(
         display_name="Fundamentals Analyst",
@@ -249,6 +283,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics"],
         best_for="Structured financial quality checks without requiring price action or news.",
         a_share_readiness="medium",
+        analysis_method="Score profitability, growth, financial health, and valuation ratios from structured metrics without LLM synthesis.",
+        execution_mode="deterministic",
     ),
     "growth_analyst": _build_analyst_config(
         display_name="Growth Analyst",
@@ -261,6 +297,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "insider_trades"],
         best_for="Companies where the main question is whether growth is persistent and investable.",
         a_share_readiness="medium",
+        analysis_method="Measure growth acceleration and durability, then cross-check with insider-trade support.",
+        execution_mode="deterministic",
     ),
     "news_sentiment_analyst": _build_analyst_config(
         display_name="News Sentiment Analyst",
@@ -273,6 +311,8 @@ ANALYST_CONFIG = {
         data_requirements=["company_news"],
         best_for="Event-driven monitoring and fast changes in narrative tone.",
         a_share_readiness="low",
+        analysis_method="Run per-article sentiment classification and aggregate the resulting tone into a news-driven signal.",
+        execution_mode="llm_assisted",
     ),
     "sentiment_analyst": _build_analyst_config(
         display_name="Sentiment Analyst",
@@ -285,6 +325,8 @@ ANALYST_CONFIG = {
         data_requirements=["insider_trades", "company_news"],
         best_for="Behavioral overlays where insider activity and narrative tone matter.",
         a_share_readiness="low",
+        analysis_method="Combine insider trading patterns with recent company news to generate a behavioral sentiment signal.",
+        execution_mode="deterministic",
     ),
     "valuation_analyst": _build_analyst_config(
         display_name="Valuation Analyst",
@@ -297,6 +339,8 @@ ANALYST_CONFIG = {
         data_requirements=["financial_metrics", "line_items", "market_cap"],
         best_for="A disciplined valuation signal when you want deterministic metrics before narrative overlays.",
         a_share_readiness="medium",
+        analysis_method="Compute WACC, DCF, and supporting valuation methods directly from structured financial inputs and market cap.",
+        execution_mode="deterministic",
     ),
 }
 
@@ -322,6 +366,8 @@ def get_agents_list():
             "data_requirements": config["data_requirements"],
             "best_for": config["best_for"],
             "a_share_readiness": config["a_share_readiness"],
+            "analysis_method": config["analysis_method"],
+            "execution_mode": config["execution_mode"],
             "order": config["order"],
         }
         for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])
@@ -344,4 +390,48 @@ def get_agent_capability_catalog():
     return {
         "analysts": get_agents_list(),
         "system_agents": get_system_agents_list(),
+    }
+
+
+def get_external_skill_manifest():
+    """Get a machine-readable manifest for external controllers using this repo as a skill."""
+    return {
+        "skill": {
+            "name": "ai-hedge-fund",
+            "purpose": "Expose analyst agents, analysis methods, and repo-managed execution entrypoints.",
+        },
+        "external_interface": {
+            "llm_input_required_from_caller": False,
+            "llm_resolution": "The repository resolves provider, base URL, key, and model from .env or saved web settings. Callers only pass --model-provider/--model when overriding.",
+            "data_fetch_required_from_caller": False,
+            "preferred_data_mode": "Provide a JSON file with --data-file and add --data-only when you want zero remote fetching.",
+            "preferred_execution_mode": "repo_managed",
+            "required_inputs": ["tickers"],
+            "optional_inputs": [
+                "analysts",
+                "start_date",
+                "end_date",
+                "data_file",
+                "data_only",
+                "initial_cash",
+                "margin_requirement",
+            ],
+        },
+        "entrypoints": {
+            "list_agents": "bash scripts/list-agents.sh",
+            "list_agents_json": "bash scripts/list-agents.sh --format json",
+            "export_skill_manifest": "bash scripts/export-skill-manifest.sh",
+            "run_analysis": "bash scripts/run-analysis.sh <tickers> [extra args...]",
+            "run_backtest": "bash scripts/run-backtest.sh <tickers> [extra args...]",
+        },
+        "recommended_workflows": {
+            "external_agent_discovery": [
+                "bash scripts/export-skill-manifest.sh",
+                "bash scripts/list-agents.sh --format json",
+            ],
+            "external_analysis_with_preloaded_data": [
+                "bash scripts/run-analysis.sh 600519.SH,000001.SZ --analysts technical_analyst,fundamentals_analyst,valuation_analyst --data-file ./sample-data.json --data-only",
+            ],
+        },
+        "catalog": get_agent_capability_catalog(),
     }

@@ -345,11 +345,18 @@ bash scripts/list-agents.sh
 bash scripts/list-agents.sh --format json
 ```
 
+如果要给外部控制器直接消费完整 Skill 接口，可以导出 manifest：
+
+```bash
+bash scripts/export-skill-manifest.sh
+```
+
 这个目录会暴露：
 
 - 可选择的 analyst agents
 - 始终参与流程的 system agents，例如 `risk_manager` 和 `portfolio_manager`
-- 每个 agent 的策略类型、适用场景、A 股适配度和数据依赖
+- 每个 agent 的策略类型、分析方法、执行模式、适用场景、A 股适配度和数据依赖
+- 一个默认由仓库自己管理 LLM 配置的外部调用接口，外部方默认不需要传 key 和 model
 
 #### 分析股票
 

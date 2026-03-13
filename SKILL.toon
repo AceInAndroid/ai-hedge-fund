@@ -1,0 +1,15 @@
+N:ai-hedge-fund
+D:Expose the AI hedge fund repo as an installable skill for external controllers. Inspect analyst agents, analysis methods, repo-managed LLM execution, and injected-data workflows.
+G:hedge fund quant trading agents a-share llm analysis backtest openclaw
+U[5]:
+  Inspect analyst capabilities and choose the right stack
+  Export a machine-readable skill manifest for external controllers
+  Run analysis or backtests with repo-managed LLM configuration
+  Inject upstream-prepared ticker data with --data-file and --data-only
+  Reuse the repo as an OpenClaw-installable skill while keeping execution in the repo workspace
+S[5]{n,action}:
+  1,Load SKILL.md and only the needed reference file
+  2,Use scripts/list-agents.sh or scripts/export-skill-manifest.sh to discover capabilities
+  3,Prefer repo-managed LLM defaults instead of asking callers for keys or model names
+  4,Prefer --data-file and --data-only when external data already exists
+  5,Run the narrowest repo script for analysis, backtest, web, or validation

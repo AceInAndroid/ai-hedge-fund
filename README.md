@@ -350,11 +350,18 @@ For JSON output that another controller or script can consume:
 bash scripts/list-agents.sh --format json
 ```
 
+For a full external-skill manifest that another controller can consume directly:
+
+```bash
+bash scripts/export-skill-manifest.sh
+```
+
 This catalog includes:
 
 - selectable analyst agents
 - always-on system agents such as `risk_manager` and `portfolio_manager`
-- each agent's strategy family, best-fit use case, A-share readiness, and data requirements
+- each agent's strategy family, analysis method, execution mode, best-fit use case, A-share readiness, and data requirements
+- a repo-managed external interface where callers do not need to supply LLM keys or model names by default
 
 #### Analyze Tickers
 

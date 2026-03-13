@@ -14,14 +14,26 @@ For machine-readable output:
 bash scripts/list-agents.sh --format json
 ```
 
+For the full external skill contract, including repo-managed LLM and data handling:
+
+```bash
+bash scripts/export-skill-manifest.sh
+```
+
 ## How to choose agents
 
 - Use `technical_analyst` when only price history is available or when A-share support needs to be the most reliable.
-- Use `fundamentals_analyst` or `valuation_analyst` when you have structured financial metrics and want deterministic signals.
+- Use `fundamentals_analyst` or `valuation_analyst` when you have structured financial metrics and want deterministic signals without depending on LLM synthesis.
 - Use value-style persona agents such as `aswath_damodaran`, `ben_graham`, `warren_buffett`, or `mohnish_pabrai` when fundamentals and market cap are available.
 - Use `news_sentiment_analyst` or `sentiment_analyst` only when company news or insider-trade coverage is actually present.
 - Use `stanley_druckenmiller` when you want a hybrid of fundamentals, momentum, and narrative.
 - Remember that `risk_manager` and `portfolio_manager` always run after the selected analysts.
+
+## External-use contract
+
+- External callers do not need to pass provider URLs, keys, or model names unless they are deliberately overriding repository defaults.
+- External callers should prefer `--data-file` and, when required, `--data-only` instead of reimplementing the repo's data-fetch path.
+- Deterministic, no-LLM-first external stacks usually start with `technical_analyst`, `fundamentals_analyst`, `valuation_analyst`, and the built-in `risk_manager` / `portfolio_manager` path.
 
 ## A-share guidance
 

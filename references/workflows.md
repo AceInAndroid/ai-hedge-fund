@@ -14,6 +14,18 @@ Machine-readable:
 bash scripts/list-agents.sh --format json
 ```
 
+Full external skill manifest:
+
+```bash
+bash scripts/export-skill-manifest.sh
+```
+
+Package for OpenClaw installation:
+
+```bash
+bash scripts/package-openclaw-skill.sh
+```
+
 ## Analyze tickers from CLI
 
 US tickers:
@@ -44,6 +56,12 @@ With externally prepared data:
 
 ```bash
 bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
+External caller using repo-managed LLM defaults:
+
+```bash
+bash scripts/run-analysis.sh AAPL,MSFT,NVDA --analysts technical_analyst,valuation_analyst
 ```
 
 ## Run a backtest

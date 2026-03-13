@@ -1,6 +1,6 @@
 ---
 name: "ai-hedge-fund"
-description: "Use when working in this repository to inspect agent capabilities, configure compatible LLM providers, run analysis or backtests, inject external ticker data directly into the CLI, or extend the A-share data-source stack."
+description: "Use when working in this repository to expose agent capabilities and analysis methods to external callers, inspect agent capabilities, configure compatible LLM providers, run analysis or backtests, inject external ticker data directly into the CLI, or extend the A-share data-source stack."
 ---
 
 # AI Hedge Fund Skill
@@ -25,6 +25,7 @@ Read only the reference file needed for the current task:
 - provider or `.env` setup: `references/configuration.md`
 - run flow, validation, or troubleshooting: `references/workflows.md`
 - agent catalog and selection guidance: `references/agents.md`
+- external interface and repo-managed execution contract: `references/external-interface.md`
 - injected JSON payload shape: `references/preloaded-data.md`
 
 ## Quick start
@@ -76,6 +77,8 @@ Agent catalog:
 ```bash
 bash scripts/list-agents.sh
 bash scripts/list-agents.sh --format json
+bash scripts/export-skill-manifest.sh
+bash scripts/package-openclaw-skill.sh
 ```
 
 ## Task routing
@@ -87,10 +90,13 @@ bash scripts/list-agents.sh --format json
 - Start backend/frontend separately: use `scripts/run-backend.sh` and `scripts/run-frontend.sh`.
 - Validate Python and frontend state after edits: use `scripts/validate.sh`.
 - Explain which analyst or system agent does what: use `scripts/list-agents.sh`, then open `references/agents.md` if needed.
+- Expose this repo to another controller or teammate: use `scripts/export-skill-manifest.sh`, then open `references/external-interface.md` if needed.
+- Package this repo as an OpenClaw-installable skill: use `scripts/package-openclaw-skill.sh`.
 - Inject external data: keep execution on `run-analysis.sh` or `run-backtest.sh`, and add `--data-file`.
 
 ## Model/provider behavior
 
+- External callers should not be required to pass LLM credentials or model names unless they explicitly want to override repo defaults.
 - CLI now prefers `.env`-configured providers and model names instead of a built-in model catalog.
 - If one provider is configured, CLI uses it automatically.
 - If multiple providers are configured, CLI asks only among configured providers.
@@ -120,6 +126,8 @@ Read `references/preloaded-data.md` for the JSON schema.
 
 Use `--data-only` when the caller requires deterministic execution without network dependence.
 
+When exposing this repo outward, prefer `--data-file` over telling callers to reimplement data fetches.
+
 ## A-share data behavior
 
 - Price fallback order is controlled by `PRICE_DATA_SOURCES`.
@@ -144,11 +152,14 @@ Open only what you need:
 - run flows and troubleshooting: `references/workflows.md`
 - injected data schema: `references/preloaded-data.md`
 - agent capability catalog and selection guidance: `references/agents.md`
+- external interface and repo-managed usage contract: `references/external-interface.md`
 
 ## Guardrails
 
 - Prefer `scripts/*.sh` wrappers first.
 - Do not hand-write long `poetry run ...` commands when a repo script already exists.
+- Do not require external callers to provide LLM setup if the repository can resolve it from `.env`.
 - Do not fetch remote data if the task explicitly provides a `--data-file` workflow.
+- OpenClaw-installed copies of this skill assume the active workspace is still the ai-hedge-fund repository root.
 - Do not assume A-share fundamentals/news coverage is complete just because prices are available.
 - When a task is only about provider setup or data-file shape, avoid loading unrelated references.

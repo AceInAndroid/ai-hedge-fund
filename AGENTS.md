@@ -7,4 +7,5 @@ When working in this repo:
 - open `references/configuration.md` for env and provider setup
 - open `references/workflows.md` for run commands and troubleshooting
 - open `references/agents.md` when the task is to choose analysts or explain agent capabilities
+- open `references/external-interface.md` when exposing the repo to another controller or teammate
 - open `references/preloaded-data.md` only when the task uses `--data-file` or `--data-only`

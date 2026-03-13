@@ -1,6 +1,6 @@
 interface:
   display_name: "AI Hedge Fund Skill"
-  short_description: "Run, configure, and extend the local AI hedge fund repo"
-  default_prompt: "Use $ai-hedge-fund to configure providers, inspect agent capabilities, run analyses or backtests, inject external data files, and modify this hedge-fund repository safely."
+  short_description: "Expose, run, configure, and extend the local AI hedge fund repo"
+  default_prompt: "Use $ai-hedge-fund to expose agent capabilities and analysis methods, let the repo manage LLM configuration, run analyses or backtests, inject external data files, and modify this hedge-fund repository safely."
 policy:
   allow_implicit_invocation: true

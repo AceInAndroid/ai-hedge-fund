@@ -15,7 +15,9 @@ def _format_agent(agent: dict) -> str:
         lines.append(f"  Strategy family: {agent['strategy_family']}")
     lines.extend(
         [
+            f"  Execution mode: {agent['execution_mode']}",
             f"  Description: {agent['description']}",
+            f"  Analysis method: {agent['analysis_method']}",
             f"  Best for: {agent['best_for']}",
             f"  A-share readiness: {agent['a_share_readiness']}",
             f"  Data requirements: {data_requirements}",
