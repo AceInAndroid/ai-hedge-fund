@@ -24,8 +24,9 @@ import { useLayoutContext } from '@/contexts/layout-context';
 import { useNodeContext } from '@/contexts/node-context';
 import { useFlowConnection } from '@/hooks/use-flow-connection';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
-import { useNodeState } from '@/hooks/use-node-state';
+import { getNodeInternalState, useNodeState } from '@/hooks/use-node-state';
 import { cn, formatKeyboardShortcut } from '@/lib/utils';
+import { requiresCustomModelName } from '@/data/models';
 import { type StockAnalyzerNode } from '../types';
 import { NodeShell } from './node-shell';
 
@@ -179,10 +180,16 @@ export function StockAnalyzerNode({
     for (const node of agentNodes) {
       const model = allAgentModels[node.id];
       if (model) {
+        const customModelName = getNodeInternalState(node.id)?.customModelName?.trim() || '';
+        if (requiresCustomModelName(model) && !customModelName) {
+          window.alert(`Please enter a custom model name for ${(node.data as any)?.name || node.id}.`);
+          return;
+        }
         agentModels.push({
           agent_id: node.id,
           model_name: model.model_name,
-          model_provider: model.provider as any
+          model_provider: model.provider as any,
+          custom_model_name: customModelName || undefined,
         });
       }
     }

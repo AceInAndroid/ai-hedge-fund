@@ -3,8 +3,29 @@ import { api } from '@/services/api';
 export interface LanguageModel {
   display_name: string;
   model_name: string;
-  provider: "Anthropic" | "DeepSeek" | "Google" | "Groq" | "OpenAI";
+  provider:
+    | "Anthropic"
+    | "Anthropic Compatible"
+    | "DeepSeek"
+    | "Google"
+    | "GigaChat"
+    | "Groq"
+    | "LM Studio"
+    | "OpenAI"
+    | "OpenAI Compatible"
+    | "OpenRouter"
+    | "Azure OpenAI"
+    | "xAI";
 }
+
+export const CUSTOM_MODEL_SENTINELS = new Set([
+  "__custom_openai_compatible__",
+  "__custom_anthropic_compatible__",
+  "__lm_studio__",
+]);
+
+export const requiresCustomModelName = (model: LanguageModel | null): boolean =>
+  !!model && CUSTOM_MODEL_SENTINELS.has(model.model_name);
 
 // Cache for models to avoid repeated API calls
 let languageModels: LanguageModel[] | null = null;

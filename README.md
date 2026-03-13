@@ -1,5 +1,7 @@
 # AI Hedge Fund
 
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
 This is a proof of concept for an AI-powered hedge fund.  The goal of this project is to explore the use of AI to make trading decisions.  This project is for **educational** purposes only and is not intended for real trading or investment.
 
 This system employs several agents working together:
@@ -43,6 +45,7 @@ By using this software, you agree to use it solely for learning purposes.
 
 ## Table of Contents
 - [How to Install](#how-to-install)
+- [Environment Configuration](#environment-configuration)
 - [How to Run](#how-to-run)
   - [⌨️ Command Line Interface](#️-command-line-interface)
   - [🖥️ Web Application](#️-web-application)
@@ -52,7 +55,7 @@ By using this software, you agree to use it solely for learning purposes.
 
 ## How to Install
 
-Before you can run the AI Hedge Fund, you'll need to install it and set up your API keys. These steps are common to both the full-stack web application and command line interface.
+Before you can run the AI Hedge Fund, install the Python and frontend dependencies first.
 
 ### 1. Clone the Repository
 
@@ -61,80 +64,363 @@ git clone https://github.com/virattt/ai-hedge-fund.git
 cd ai-hedge-fund
 ```
 
-### 2. Set up API keys
+### 2. Install Python Dependencies
 
-Create a `.env` file for your API keys:
+This project uses Poetry and targets Python `3.11`.
+
 ```bash
-# Create .env file for your API keys (in the root directory)
+poetry install
+```
+
+### 3. Install Frontend Dependencies
+
+The web UI lives in `app/frontend`.
+
+```bash
+cd app/frontend
+npm install
+cd ../..
+```
+
+## Environment Configuration
+
+### 1. Create the `.env` File
+
+```bash
 cp .env.example .env
 ```
 
-Open and edit the `.env` file to add your API keys:
-```bash
-# For running LLMs hosted by openai (gpt-4o, gpt-4o-mini, etc.)
-OPENAI_API_KEY=your-openai-api-key
+The `.env` file must be created in the project root directory, at the same level as `README.md`, `pyproject.toml`, and `src/`.
 
-# For getting financial data to power the hedge fund
+Example root path:
+
+```text
+ai-hedge-fund/
+├── .env
+├── .env.example
+├── README.md
+├── pyproject.toml
+├── src/
+└── app/
+```
+
+You can confirm you are in the project root with:
+
+```bash
+pwd
+ls -la .env .env.example
+```
+
+How to open `.env`:
+
+- VS Code:
+  ```bash
+  code .env
+  ```
+- macOS terminal editor:
+  ```bash
+  nano .env
+  ```
+- Linux terminal editor:
+  ```bash
+  nano .env
+  ```
+- Windows PowerShell:
+  ```powershell
+  notepad .env
+  ```
+
+If you use `nano`, edit the file, then press `Ctrl+O` to save and `Ctrl+X` to exit.
+
+### 2. Minimum Required Configuration
+
+At least one LLM provider must be configured, otherwise the agents cannot run.
+
+You can use any one of these methods:
+
+- Official OpenAI
+- Official Anthropic
+- OpenAI-compatible API
+- Anthropic-compatible API
+- LM Studio local server
+
+### 3. Environment Variable Examples
+
+All environment variable examples below must be written into the root `.env` file you just created.
+
+Each line uses this format:
+
+```bash
+KEY=value
+```
+
+Do not wrap values in JSON. Do not add commas at the end of lines.
+
+Example:
+
+```bash
+OPENAI_API_KEY=sk-xxxxx
+OPENAI_API_BASE=https://api.openai.com/v1
+```
+
+#### Example A: Official OpenAI
+
+```bash
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_API_BASE=https://api.openai.com/v1
+```
+
+#### Example B: DashScope Anthropic-Compatible
+
+```bash
+ANTHROPIC_AUTH_TOKEN=your-dashscope-api-key
+ANTHROPIC_BASE_URL=https://coding.dashscope.aliyuncs.com/apps/anthropic
+ANTHROPIC_MODEL=qwen3.5-plus
+```
+
+#### Example C: OpenAI-Compatible Gateway
+
+```bash
+OPENAI_COMPATIBLE_API_KEY=your-compatible-api-key
+OPENAI_COMPATIBLE_BASE_URL=https://your-openai-compatible-host/v1
+OPENAI_COMPATIBLE_MODEL=your-model-name
+```
+
+#### Example D: Anthropic-Compatible Gateway
+
+```bash
+ANTHROPIC_COMPATIBLE_API_KEY=your-compatible-api-key
+ANTHROPIC_COMPATIBLE_BASE_URL=https://your-anthropic-compatible-host/v1
+ANTHROPIC_COMPATIBLE_MODEL=your-model-name
+```
+
+#### Example E: LM Studio
+
+```bash
+LM_STUDIO_BASE_URL=http://127.0.0.1:1234/v1
+LM_STUDIO_API_KEY=lm-studio
+LM_STUDIO_MODEL=your-local-model-name
+```
+
+#### Complete `.env` Example
+
+This is a valid example of what the root `.env` file can look like:
+
+```bash
+# LLM provider: DashScope Anthropic-compatible
+ANTHROPIC_AUTH_TOKEN=your-dashscope-api-key
+ANTHROPIC_BASE_URL=https://coding.dashscope.aliyuncs.com/apps/anthropic
+ANTHROPIC_MODEL=qwen3.5-plus
+
+# Financial data
+FINANCIAL_DATASETS_API_KEY=your-financial-datasets-api-key
+
+# A-share price fallback order
+PRICE_DATA_SOURCES=financial_datasets,akshare,baostock,tushare,tencent,xueqiu,baidu
+TUSHARE_TOKEN=your-tushare-token
+```
+
+After editing `.env`, save the file and restart the CLI command or web backend so the new values are loaded.
+
+### 3.1 How CLI Model Selection Works
+
+The CLI no longer requires you to choose from a built-in model catalog first.
+
+Current behavior:
+
+- CLI reads the configured provider from `.env`
+- CLI reads the configured model name from the matching `*_MODEL` variable
+- If only one provider is configured, it is selected automatically
+- If multiple providers are configured, CLI asks you to choose among the configured providers only
+- If a provider is configured but its `*_MODEL` value is missing, CLI asks you to type the model name manually
+
+For example, if your `.env` contains:
+
+```bash
+ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
+ANTHROPIC_BASE_URL=https://coding.dashscope.aliyuncs.com/apps/anthropic
+ANTHROPIC_MODEL=qwen3.5-plus
+```
+
+then running:
+
+```bash
+poetry run python src/main.py --ticker AAPL,MSFT,NVDA
+```
+
+will use:
+
+- provider: `Anthropic`
+- model: `qwen3.5-plus`
+
+without asking you to pick from built-in Claude or GPT model lists.
+
+### 4. Financial Data Configuration
+
+For US tickers, the existing `FINANCIAL_DATASETS_API_KEY` flow remains the main source.
+
+```bash
 FINANCIAL_DATASETS_API_KEY=your-financial-datasets-api-key
 ```
 
-**Important**: You must set at least one LLM API key (e.g. `OPENAI_API_KEY`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, or `DEEPSEEK_API_KEY`) for the hedge fund to work. 
+### 5. A-Share Price Fallback Configuration
 
-**Financial Data**: Data for AAPL, GOOGL, MSFT, NVDA, and TSLA is free and does not require an API key. For any other ticker, you will need to set the `FINANCIAL_DATASETS_API_KEY` in the .env file.
+For mainland China tickers, the project now supports price fallback across:
+
+- `financial_datasets`
+- `akshare`
+- `baostock`
+- `tushare`
+- `tencent`
+- `xueqiu`
+- `baidu`
+
+Use this configuration in `.env` if you want to control the fallback order:
+
+```bash
+PRICE_DATA_SOURCES=financial_datasets,akshare,baostock,tushare,tencent,xueqiu,baidu
+TUSHARE_TOKEN=your-tushare-token
+```
+
+Notes:
+
+- `TUSHARE_TOKEN` is only required if `tushare` is included in `PRICE_DATA_SOURCES`.
+- `Akshare`, `Baostock`, and `Tushare` are declared in `pyproject.toml`; run `poetry install` after pulling the latest changes.
+- The A-share fallback currently applies to price data. Financial metrics, company news, and insider trades still use the original financial data flow.
+
+### 6. Web Settings Page vs `.env`
+
+If you use the web application:
+
+- `.env` is the easiest way to set default configuration for local development.
+- The Settings page in the web UI can also save provider keys, URLs, `PRICE_DATA_SOURCES`, and `TUSHARE_TOKEN`.
+- Web-saved settings are passed into the backend request and can override missing environment values.
+
+Where to configure what:
+
+- Want defaults for local development: edit the root `.env` file.
+- Want to change configuration from the browser: open the Web app, then go to `Settings`.
+- Want both: keep stable defaults in `.env`, and use the Settings page for temporary or per-environment adjustments.
 
 ## How to Run
 
 ### ⌨️ Command Line Interface
 
-You can run the AI Hedge Fund directly via terminal. This approach offers more granular control and is useful for automation, scripting, and integration purposes.
+You can run the AI Hedge Fund directly from the terminal for research, scripting, or debugging.
 
 <img width="992" alt="Screenshot 2025-01-06 at 5 50 17 PM" src="https://github.com/user-attachments/assets/e8ca04bf-9989-4a7d-a8b4-34e04666663b" />
 
-#### Quick Start
+#### Analyze Tickers
 
-1. Install Poetry (if not already installed):
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-2. Install dependencies:
-```bash
-poetry install
-```
-
-#### Run the AI Hedge Fund
 ```bash
 poetry run python src/main.py --ticker AAPL,MSFT,NVDA
 ```
 
-You can also specify a `--ollama` flag to run the AI hedge fund using local LLMs.
+If your `.env` already contains model settings, CLI uses them directly.
+
+Example with DashScope Anthropic-compatible:
 
 ```bash
-poetry run python src/main.py --ticker AAPL,MSFT,NVDA --ollama
+ANTHROPIC_AUTH_TOKEN=YOUR_API_KEY
+ANTHROPIC_BASE_URL=https://coding.dashscope.aliyuncs.com/apps/anthropic
+ANTHROPIC_MODEL=qwen3.5-plus
 ```
 
-You can optionally specify the start and end dates to make decisions over a specific time period.
+Run:
+
+```bash
+poetry run python src/main.py --ticker AAPL,MSFT,NVDA
+```
+
+CLI will use `qwen3.5-plus` automatically.
+
+#### Analyze A-Share Tickers
+
+```bash
+poetry run python src/main.py --ticker 600519.SH,000001.SZ
+```
+
+You can optionally pass a time range:
 
 ```bash
 poetry run python src/main.py --ticker AAPL,MSFT,NVDA --start-date 2024-01-01 --end-date 2024-03-01
 ```
 
+If you want to use local models through Ollama:
+
+```bash
+poetry run python src/main.py --ticker AAPL,MSFT,NVDA --ollama
+```
+
 #### Run the Backtester
+
 ```bash
 poetry run python src/backtester.py --ticker AAPL,MSFT,NVDA
 ```
 
-**Example Output:**
-<img width="941" alt="Screenshot 2025-01-06 at 5 47 52 PM" src="https://github.com/user-attachments/assets/00e794ea-8628-44e6-9a84-8f8a31ad3b47" />
+Backtester also supports `--start-date`, `--end-date`, and `--ollama`.
 
+#### Common CLI Usage Notes
 
-Note: The `--ollama`, `--start-date`, and `--end-date` flags work for the backtester, as well!
+- `--ticker` uses a comma-separated list.
+- A-share tickers can be written as `600519.SH`, `000001.SZ`, or six-digit codes such as `600519`.
+- Make sure your `.env` is configured before running CLI commands.
+- `--model-provider` and `--model` are optional overrides for CLI runs.
+- If `.env` already defines `ANTHROPIC_MODEL`, `OPENAI_COMPATIBLE_MODEL`, `LM_STUDIO_MODEL`, and similar variables, CLI uses those values directly.
+
+Example override:
+
+```bash
+poetry run python src/main.py --ticker AAPL,MSFT,NVDA --model-provider anthropic --model qwen3.5-plus
+```
 
 ### 🖥️ Web Application
 
-The new way to run the AI Hedge Fund is through our web application that provides a user-friendly interface. This is recommended for users who prefer visual interfaces over command line tools.
+The web application is the easiest way to switch models, edit flows, and manage saved settings.
 
-Please see detailed instructions on how to install and run the web application [here](https://github.com/virattt/ai-hedge-fund/tree/main/app).
+#### Method 1: Start Both Services with One Command
+
+macOS / Linux:
+
+```bash
+bash app/run.sh
+```
+
+Windows:
+
+```bat
+app\run.bat
+```
+
+#### Method 2: Start Backend and Frontend Manually
+
+Backend:
+
+```bash
+poetry run uvicorn app.backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Frontend:
+
+```bash
+cd app/frontend
+npm run dev
+```
+
+After startup:
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- Swagger docs: `http://localhost:8000/docs`
+
+#### Web Usage Flow
+
+1. Open the Settings page and fill in your LLM/data-source configuration.
+2. Choose model provider and model for each node if needed.
+3. Enter tickers and date range.
+4. Run the analysis or the backtest from the UI.
+
+You can still find app-specific details in [app/README.md](./app/README.md).
 
 <img width="1721" alt="Screenshot 2025-06-28 at 6 41 03 PM" src="https://github.com/user-attachments/assets/b95ab696-c9f4-416c-9ad1-51feb1f5374b" />
 

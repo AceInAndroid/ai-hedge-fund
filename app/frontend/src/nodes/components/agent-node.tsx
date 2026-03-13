@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { ModelSelector } from '@/components/ui/llm-selector';
 import { useFlowContext } from '@/contexts/flow-context';
 import { useNodeContext } from '@/contexts/node-context';
-import { getModels, LanguageModel } from '@/data/models';
+import { getModels, LanguageModel, requiresCustomModelName } from '@/data/models';
 import { useNodeState } from '@/hooks/use-node-state';
 import { cn } from '@/lib/utils';
 import { type AgentNode } from '../types';
@@ -40,6 +41,7 @@ export function AgentNode({
   // Use persistent state hooks
   const [availableModels, setAvailableModels] = useNodeState<LanguageModel[]>(id, 'availableModels', []);
   const [selectedModel, setSelectedModel] = useNodeState<LanguageModel | null>(id, 'selectedModel', null);
+  const [customModelName, setCustomModelName] = useNodeState(id, 'customModelName', '');
 
   // Load models on mount
   useEffect(() => {
@@ -67,10 +69,14 @@ export function AgentNode({
 
   const handleModelChange = (model: LanguageModel | null) => {
     setSelectedModel(model);
+    if (!requiresCustomModelName(model)) {
+      setCustomModelName('');
+    }
   };
 
   const handleUseGlobalModel = () => {
     setSelectedModel(null);
+    setCustomModelName('');
   };
 
   return (
@@ -120,6 +126,13 @@ export function AgentNode({
                       onChange={handleModelChange}
                       placeholder="Auto"
                     />
+                    {requiresCustomModelName(selectedModel) && (
+                      <Input
+                        placeholder="Enter model name"
+                        value={customModelName}
+                        onChange={(e) => setCustomModelName(e.target.value)}
+                      />
+                    )}
                     {selectedModel && (
                       <button
                         onClick={handleUseGlobalModel}

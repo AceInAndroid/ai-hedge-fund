@@ -5,7 +5,7 @@ from src.tools.api import get_prices, prices_to_df
 import json
 import numpy as np
 import pandas as pd
-from src.utils.api_key import get_api_key_from_state
+from src.utils.api_key import get_api_key_from_state, get_api_keys_from_state
 
 ##### Risk Management Agent #####
 def risk_management_agent(state: AgentState, agent_id: str = "risk_management_agent"):
@@ -14,6 +14,7 @@ def risk_management_agent(state: AgentState, agent_id: str = "risk_management_ag
     data = state["data"]
     tickers = data["tickers"]
     api_key = get_api_key_from_state(state, "FINANCIAL_DATASETS_API_KEY")
+    api_keys = get_api_keys_from_state(state)
     
     # Initialize risk analysis for each ticker
     risk_analysis = {}
@@ -32,6 +33,7 @@ def risk_management_agent(state: AgentState, agent_id: str = "risk_management_ag
             start_date=data["start_date"],
             end_date=data["end_date"],
             api_key=api_key,
+            api_keys=api_keys,
         )
 
         if not prices:

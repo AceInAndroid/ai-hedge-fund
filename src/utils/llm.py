@@ -36,7 +36,7 @@ def call_llm(
     else:
         # Use system defaults when no state or agent_name is provided
         model_name = "gpt-4.1"
-        model_provider = "OPENAI"
+        model_provider = "OpenAI"
 
     # Extract API keys from state if available
     api_keys = None
@@ -49,7 +49,7 @@ def call_llm(
     llm = get_model(model_name, model_provider, api_keys)
 
     # For non-JSON support models, we can use structured output
-    if not (model_info and not model_info.has_json_mode()):
+    if model_info and model_info.has_json_mode() and hasattr(llm, "with_structured_output"):
         llm = llm.with_structured_output(
             pydantic_model,
             method="json_mode",
@@ -108,6 +108,9 @@ def create_default_response(model_class: type[BaseModel]) -> BaseModel:
 
 def extract_json_from_response(content: str) -> dict | None:
     """Extracts JSON from markdown-formatted response."""
+    if not content:
+        return None
+
     try:
         json_start = content.find("```json")
         if json_start != -1:
@@ -116,6 +119,20 @@ def extract_json_from_response(content: str) -> dict | None:
             if json_end != -1:
                 json_text = json_text[:json_end].strip()
                 return json.loads(json_text)
+
+        stripped = content.strip()
+        if stripped.startswith("```") and stripped.endswith("```"):
+            stripped = "\n".join(stripped.splitlines()[1:-1]).strip()
+            return json.loads(stripped)
+
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            start = stripped.find("{")
+            end = stripped.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                return json.loads(stripped[start : end + 1])
+            raise
     except Exception as e:
         print(f"Error extracting JSON from response: {e}")
     return None
@@ -138,7 +155,7 @@ def get_agent_model_config(state, agent_name):
     
     # Fall back to global configuration (system defaults)
     model_name = state.get("metadata", {}).get("model_name") or "gpt-4.1"
-    model_provider = state.get("metadata", {}).get("model_provider") or "OPENAI"
+    model_provider = state.get("metadata", {}).get("model_provider") or "OpenAI"
     
     # Convert enum to string if necessary
     if hasattr(model_provider, 'value'):

@@ -1,4 +1,5 @@
 import sys
+import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import argparse
@@ -6,11 +7,65 @@ import questionary
 from colorama import Fore, Style
 
 from src.utils.analysts import ANALYST_ORDER
-from src.llm.models import LLM_ORDER, OLLAMA_LLM_ORDER, get_model_info, ModelProvider, find_model_by_name
+from src.llm.models import OLLAMA_LLM_ORDER, ModelProvider
 from src.utils.ollama import ensure_ollama_and_model
 
 from dataclasses import dataclass
 from typing import Optional
+
+
+CLI_PROVIDER_ORDER = [
+    ModelProvider.ANTHROPIC,
+    ModelProvider.OPENAI,
+    ModelProvider.OPENAI_COMPATIBLE,
+    ModelProvider.ANTHROPIC_COMPATIBLE,
+    ModelProvider.LM_STUDIO,
+    ModelProvider.DEEPSEEK,
+    ModelProvider.GOOGLE,
+    ModelProvider.GROQ,
+    ModelProvider.OPENROUTER,
+    ModelProvider.XAI,
+    ModelProvider.GIGACHAT,
+    ModelProvider.AZURE_OPENAI,
+]
+
+MODEL_ENV_KEYS: dict[ModelProvider, str] = {
+    ModelProvider.ANTHROPIC: "ANTHROPIC_MODEL",
+    ModelProvider.OPENAI: "OPENAI_MODEL",
+    ModelProvider.OPENAI_COMPATIBLE: "OPENAI_COMPATIBLE_MODEL",
+    ModelProvider.ANTHROPIC_COMPATIBLE: "ANTHROPIC_COMPATIBLE_MODEL",
+    ModelProvider.LM_STUDIO: "LM_STUDIO_MODEL",
+    ModelProvider.DEEPSEEK: "DEEPSEEK_MODEL",
+    ModelProvider.GOOGLE: "GOOGLE_MODEL",
+    ModelProvider.GROQ: "GROQ_MODEL",
+    ModelProvider.OPENROUTER: "OPENROUTER_MODEL",
+    ModelProvider.XAI: "XAI_MODEL",
+    ModelProvider.GIGACHAT: "GIGACHAT_MODEL",
+    ModelProvider.AZURE_OPENAI: "AZURE_OPENAI_DEPLOYMENT_NAME",
+}
+
+PROVIDER_ALIASES = {
+    "anthropic": ModelProvider.ANTHROPIC,
+    "openai": ModelProvider.OPENAI,
+    "openai-compatible": ModelProvider.OPENAI_COMPATIBLE,
+    "openai_compatible": ModelProvider.OPENAI_COMPATIBLE,
+    "openaicompatible": ModelProvider.OPENAI_COMPATIBLE,
+    "anthropic-compatible": ModelProvider.ANTHROPIC_COMPATIBLE,
+    "anthropic_compatible": ModelProvider.ANTHROPIC_COMPATIBLE,
+    "anthropiccompatible": ModelProvider.ANTHROPIC_COMPATIBLE,
+    "lm-studio": ModelProvider.LM_STUDIO,
+    "lm_studio": ModelProvider.LM_STUDIO,
+    "lmstudio": ModelProvider.LM_STUDIO,
+    "deepseek": ModelProvider.DEEPSEEK,
+    "google": ModelProvider.GOOGLE,
+    "groq": ModelProvider.GROQ,
+    "openrouter": ModelProvider.OPENROUTER,
+    "xai": ModelProvider.XAI,
+    "gigachat": ModelProvider.GIGACHAT,
+    "azure-openai": ModelProvider.AZURE_OPENAI,
+    "azure_openai": ModelProvider.AZURE_OPENAI,
+    "azureopenai": ModelProvider.AZURE_OPENAI,
+}
 
 
 def add_common_args(
@@ -40,7 +95,18 @@ def add_common_args(
         )
     if include_ollama:
         parser.add_argument("--ollama", action="store_true", help="Use Ollama for local LLM inference")
-    parser.add_argument("--model", type=str, required=False, help="Model name to use (e.g., gpt-4o)")
+    parser.add_argument(
+        "--model-provider",
+        type=str,
+        required=False,
+        help="LLM provider to use (e.g., anthropic, openai-compatible, lm-studio). If omitted, CLI will use the configured provider from .env.",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=False,
+        help="Model name to use. If omitted, CLI will use the configured *_MODEL value from .env or prompt for a custom model name.",
+    )
     return parser
 
 
@@ -102,19 +168,107 @@ def select_analysts(flags: dict | None = None) -> list[str]:
     return choices
 
 
-def select_model(use_ollama: bool, model_flag: str | None = None) -> tuple[str, str]:
+def _env_has_any(*keys: str) -> bool:
+    return any(os.getenv(key) for key in keys)
+
+
+def _env_has_all(*keys: str) -> bool:
+    return all(os.getenv(key) for key in keys)
+
+
+def _is_provider_configured(provider: ModelProvider) -> bool:
+    if provider == ModelProvider.ANTHROPIC:
+        return _env_has_any("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+    if provider == ModelProvider.OPENAI:
+        return _env_has_any("OPENAI_API_KEY")
+    if provider == ModelProvider.OPENAI_COMPATIBLE:
+        return _env_has_any("OPENAI_COMPATIBLE_BASE_URL")
+    if provider == ModelProvider.ANTHROPIC_COMPATIBLE:
+        return _env_has_all("ANTHROPIC_COMPATIBLE_BASE_URL", "ANTHROPIC_COMPATIBLE_API_KEY") or (
+            _env_has_any("ANTHROPIC_COMPATIBLE_BASE_URL") and _env_has_any("ANTHROPIC_AUTH_TOKEN")
+        )
+    if provider == ModelProvider.LM_STUDIO:
+        return _env_has_any("LM_STUDIO_MODEL", "LM_STUDIO_BASE_URL", "LM_STUDIO_API_KEY")
+    if provider == ModelProvider.DEEPSEEK:
+        return _env_has_any("DEEPSEEK_API_KEY")
+    if provider == ModelProvider.GOOGLE:
+        return _env_has_any("GOOGLE_API_KEY")
+    if provider == ModelProvider.GROQ:
+        return _env_has_any("GROQ_API_KEY")
+    if provider == ModelProvider.OPENROUTER:
+        return _env_has_any("OPENROUTER_API_KEY")
+    if provider == ModelProvider.XAI:
+        return _env_has_any("XAI_API_KEY")
+    if provider == ModelProvider.GIGACHAT:
+        return _env_has_any("GIGACHAT_API_KEY", "GIGACHAT_CREDENTIALS") or _env_has_all("GIGACHAT_USER", "GIGACHAT_PASSWORD")
+    if provider == ModelProvider.AZURE_OPENAI:
+        return _env_has_all("AZURE_OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT_NAME")
+    return False
+
+
+def _get_configured_providers() -> list[ModelProvider]:
+    return [provider for provider in CLI_PROVIDER_ORDER if _is_provider_configured(provider)]
+
+
+def _get_env_model_name(provider: ModelProvider) -> str | None:
+    env_key = MODEL_ENV_KEYS.get(provider)
+    return os.getenv(env_key) if env_key else None
+
+
+def _parse_provider(provider_name: str) -> ModelProvider:
+    if not provider_name:
+        raise ValueError("Model provider cannot be empty.")
+
+    try:
+        return ModelProvider(provider_name)
+    except ValueError:
+        alias = PROVIDER_ALIASES.get(provider_name.strip().lower())
+        if alias:
+            return alias
+
+    supported = ", ".join(provider.value for provider in CLI_PROVIDER_ORDER)
+    raise ValueError(f"Unknown model provider '{provider_name}'. Supported values: {supported}")
+
+
+def _select_provider_interactively(configured_providers: list[ModelProvider]) -> ModelProvider:
+    if len(configured_providers) == 1:
+        provider = configured_providers[0]
+        print(f"\nUsing configured provider from .env: {Fore.CYAN}{provider.value}{Style.RESET_ALL}\n")
+        return provider
+
+    provider_choice = questionary.select(
+        "Select your configured LLM provider:",
+        choices=[
+            questionary.Choice(
+                f"{provider.value}{f' ({_get_env_model_name(provider)})' if _get_env_model_name(provider) else ''}",
+                value=provider,
+            )
+            for provider in configured_providers
+        ],
+        style=questionary.Style(
+            [
+                ("selected", "fg:green bold"),
+                ("pointer", "fg:green bold"),
+                ("highlighted", "fg:green"),
+                ("answer", "fg:green bold"),
+            ]
+        ),
+    ).ask()
+
+    if not provider_choice:
+        print("\n\nInterrupt received. Exiting...")
+        sys.exit(0)
+
+    return provider_choice
+
+
+def select_model(
+    use_ollama: bool,
+    model_flag: str | None = None,
+    model_provider_flag: str | None = None,
+) -> tuple[str, str]:
     model_name: str = ""
     model_provider: str | None = None
-
-    if model_flag:
-        model = find_model_by_name(model_flag)
-        if model:
-            print(
-                f"\nUsing specified model: {Fore.CYAN}{model.provider.value}{Style.RESET_ALL} - {Fore.GREEN + Style.BRIGHT}{model.model_name}{Style.RESET_ALL}\n"
-            )
-            return model.model_name, model.provider.value
-        else:
-            print(f"{Fore.RED}Model '{model_flag}' not found. Please select a model.{Style.RESET_ALL}")
 
     if use_ollama:
         print(f"{Fore.CYAN}Using Ollama for local LLM inference.{Style.RESET_ALL}")
@@ -150,39 +304,44 @@ def select_model(use_ollama: bool, model_flag: str | None = None) -> tuple[str, 
             f"\nSelected {Fore.CYAN}Ollama{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
         )
     else:
-        model_choice = questionary.select(
-            "Select your LLM model:",
-            choices=[questionary.Choice(display, value=(name, provider)) for display, name, provider in LLM_ORDER],
-            style=questionary.Style(
-                [
-                    ("selected", "fg:green bold"),
-                    ("pointer", "fg:green bold"),
-                    ("highlighted", "fg:green"),
-                    ("answer", "fg:green bold"),
-                ]
-            ),
-        ).ask()
+        configured_providers = _get_configured_providers()
 
-        if not model_choice:
-            print("\n\nInterrupt received. Exiting...")
-            sys.exit(0)
-
-        model_name, model_provider = model_choice
-
-        model_info = get_model_info(model_name, model_provider)
-        if model_info and model_info.is_custom():
-            model_name = questionary.text("Enter the custom model name:").ask()
-            if not model_name:
-                print("\n\nInterrupt received. Exiting...")
-                sys.exit(0)
-
-        if model_info:
-            print(
-                f"\nSelected {Fore.CYAN}{model_provider}{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
-            )
+        if model_provider_flag:
+            provider = _parse_provider(model_provider_flag)
+            if not _is_provider_configured(provider):
+                raise ValueError(
+                    f"Provider {provider.value} is not configured in your environment. "
+                    f"Please update .env first, then rerun the command."
+                )
         else:
-            model_provider = "Unknown"
-            print(f"\nSelected model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n")
+            if not configured_providers:
+                raise ValueError(
+                    "No configured LLM providers found in .env. "
+                    "Please configure one provider such as ANTHROPIC_AUTH_TOKEN/ANTHROPIC_MODEL or OPENAI_API_KEY/OPENAI_MODEL."
+                )
+            provider = _select_provider_interactively(configured_providers)
+
+        model_provider = provider.value
+
+        if model_flag:
+            model_name = model_flag
+        else:
+            model_name = _get_env_model_name(provider) or ""
+            if model_name:
+                print(
+                    f"\nUsing configured model from .env: {Fore.CYAN}{model_provider}{Style.RESET_ALL} - "
+                    f"{Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
+                )
+            else:
+                model_name = questionary.text(f"Enter the model name for {provider.value}:").ask()
+                if not model_name:
+                    print("\n\nInterrupt received. Exiting...")
+                    sys.exit(0)
+
+        print(
+            f"\nSelected {Fore.CYAN}{model_provider}{Style.RESET_ALL} model: "
+            f"{Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
+        )
 
     return model_name, model_provider or ""
 
@@ -268,7 +427,11 @@ def parse_cli_inputs(
         "analysts_all": getattr(args, "analysts_all", False),
         "analysts": getattr(args, "analysts", None),
     })
-    model_name, model_provider = select_model(getattr(args, "ollama", False), getattr(args, "model", None))
+    model_name, model_provider = select_model(
+        getattr(args, "ollama", False),
+        getattr(args, "model", None),
+        getattr(args, "model_provider", None),
+    )
     start_date, end_date = resolve_dates(getattr(args, "start_date", None), getattr(args, "end_date", None), default_months_back=default_months_back)
 
     return CLIInputs(
@@ -284,5 +447,4 @@ def parse_cli_inputs(
         show_agent_graph=getattr(args, "show_agent_graph", False),
         raw_args=args,
     )
-
 

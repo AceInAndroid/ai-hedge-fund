@@ -18,6 +18,11 @@ from src.data.models import (
     InsiderTradeResponse,
     CompanyFactsResponse,
 )
+from src.tools.a_share_data import (
+    fetch_a_share_prices,
+    get_configured_price_data_sources,
+    is_a_share_ticker,
+)
 
 # Global cache instance
 _cache = get_cache()
@@ -57,16 +62,7 @@ def _make_api_request(url: str, headers: dict, method: str = "GET", json_data: d
         return response
 
 
-def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None) -> list[Price]:
-    """Fetch price data from cache or API."""
-    # Create a cache key that includes all parameters to ensure exact matches
-    cache_key = f"{ticker}_{start_date}_{end_date}"
-    
-    # Check cache first - simple exact match
-    if cached_data := _cache.get_prices(cache_key):
-        return [Price(**price) for price in cached_data]
-
-    # If not in cache, fetch from API
+def _get_prices_from_financial_datasets(ticker: str, start_date: str, end_date: str, api_key: str = None) -> list[Price]:
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
     if financial_api_key:
@@ -77,12 +73,33 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
     if response.status_code != 200:
         return []
 
-    # Parse response with Pydantic model
     try:
         price_response = PriceResponse(**response.json())
-        prices = price_response.prices
-    except:
+        return price_response.prices
+    except Exception:
         return []
+
+
+def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None, api_keys: dict | None = None) -> list[Price]:
+    """Fetch price data from cache or API."""
+    configured_sources = get_configured_price_data_sources(api_keys)
+    cache_key = f"{ticker}_{start_date}_{end_date}_{'_'.join(configured_sources)}"
+    
+    # Check cache first - simple exact match
+    if cached_data := _cache.get_prices(cache_key):
+        return [Price(**price) for price in cached_data]
+
+    prices: list[Price] = []
+    for source in configured_sources:
+        if source == "financial_datasets":
+            prices = _get_prices_from_financial_datasets(ticker, start_date, end_date, api_key=api_key)
+        elif is_a_share_ticker(ticker):
+            prices = fetch_a_share_prices(source, ticker, start_date, end_date, api_keys=api_keys)
+        else:
+            prices = []
+
+        if prices:
+            break
 
     if not prices:
         return []
@@ -310,6 +327,9 @@ def get_market_cap(
     api_key: str = None,
 ) -> float | None:
     """Fetch market cap from the API."""
+    if is_a_share_ticker(ticker):
+        return None
+
     # Check if end_date is today
     if end_date == datetime.datetime.now().strftime("%Y-%m-%d"):
         # Get the market cap from company facts API
@@ -321,7 +341,8 @@ def get_market_cap(
         url = f"https://api.financialdatasets.ai/company/facts/?ticker={ticker}"
         response = _make_api_request(url, headers)
         if response.status_code != 200:
-            print(f"Error fetching company facts: {ticker} - {response.status_code}")
+            if response.status_code != 404:
+                print(f"Error fetching company facts: {ticker} - {response.status_code}")
             return None
 
         data = response.json()
@@ -353,6 +374,6 @@ def prices_to_df(prices: list[Price]) -> pd.DataFrame:
 
 
 # Update the get_price_data function to use the new functions
-def get_price_data(ticker: str, start_date: str, end_date: str, api_key: str = None) -> pd.DataFrame:
-    prices = get_prices(ticker, start_date, end_date, api_key=api_key)
+def get_price_data(ticker: str, start_date: str, end_date: str, api_key: str = None, api_keys: dict | None = None) -> pd.DataFrame:
+    prices = get_prices(ticker, start_date, end_date, api_key=api_key, api_keys=api_keys)
     return prices_to_df(prices)

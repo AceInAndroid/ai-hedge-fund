@@ -15,6 +15,20 @@
     "provider": "OpenAI"
   },
   {
+    "display_name": "Custom OpenAI-Compatible",
+    "model_name": "__custom_openai_compatible__",
+    "provider": "OpenAI Compatible",
+    "supports_json_mode": false,
+    "custom": true
+  },
+  {
+    "display_name": "LM Studio",
+    "model_name": "__lm_studio__",
+    "provider": "LM Studio",
+    "supports_json_mode": false,
+    "custom": true
+  },
+  {
     "display_name": "Claude Sonnet 4.5",
     "model_name": "claude-sonnet-4-5-20250929",
     "provider": "Anthropic"
@@ -28,6 +42,13 @@
     "display_name": "Claude Opus 4.5",
     "model_name": "claude-opus-4-5-20251101",
     "provider": "Anthropic"
+  },
+  {
+    "display_name": "Custom Anthropic-Compatible",
+    "model_name": "__custom_anthropic_compatible__",
+    "provider": "Anthropic Compatible",
+    "supports_json_mode": false,
+    "custom": true
   },
   {
     "display_name": "DeepSeek R1",

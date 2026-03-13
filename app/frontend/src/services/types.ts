@@ -1,15 +1,25 @@
 // Shared types for API requests and responses
 export enum ModelProvider {
   OPENAI = 'OpenAI',
+  OPENAI_COMPATIBLE = 'OpenAI Compatible',
   ANTHROPIC = 'Anthropic',
+  ANTHROPIC_COMPATIBLE = 'Anthropic Compatible',
+  DEEPSEEK = 'DeepSeek',
+  GOOGLE = 'Google',
   GROQ = 'Groq',
+  GIGACHAT = 'GigaChat',
+  OPENROUTER = 'OpenRouter',
   OLLAMA = 'Ollama',
+  LM_STUDIO = 'LM Studio',
+  AZURE_OPENAI = 'Azure OpenAI',
+  XAI = 'xAI',
 }
 
 export interface AgentModelConfig {
   agent_id: string;
   model_name?: string;
   model_provider?: ModelProvider;
+  custom_model_name?: string;
 }
 
 export interface GraphNode {
@@ -43,6 +53,7 @@ export interface BaseHedgeFundRequest {
   model_provider?: ModelProvider;
   margin_requirement?: number;
   portfolio_positions?: PortfolioPosition[];
+  api_keys?: Record<string, string>;
 }
 
 export interface HedgeFundRequest extends BaseHedgeFundRequest {

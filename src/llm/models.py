@@ -6,7 +6,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_xai import ChatXAI
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from langchain_openai import ChatOpenAI
 from langchain_gigachat import GigaChat
 from langchain_ollama import ChatOllama
 from enum import Enum
@@ -14,18 +13,23 @@ from pydantic import BaseModel
 from typing import Tuple, List
 from pathlib import Path
 
+from src.llm.compatible import AnthropicCompatibleChatModel, OpenAICompatibleChatModel
+
 
 class ModelProvider(str, Enum):
     """Enum for supported LLM providers"""
 
     ALIBABA = "Alibaba"
     ANTHROPIC = "Anthropic"
+    ANTHROPIC_COMPATIBLE = "Anthropic Compatible"
     DEEPSEEK = "DeepSeek"
     GOOGLE = "Google"
     GROQ = "Groq"
     META = "Meta"
     MISTRAL = "Mistral"
+    LM_STUDIO = "LM Studio"
     OPENAI = "OpenAI"
+    OPENAI_COMPATIBLE = "OpenAI Compatible"
     OLLAMA = "Ollama"
     OPENROUTER = "OpenRouter"
     GIGACHAT = "GigaChat"
@@ -39,17 +43,21 @@ class LLMModel(BaseModel):
     display_name: str
     model_name: str
     provider: ModelProvider
+    supports_json_mode: bool = True
+    custom: bool = False
 
     def to_choice_tuple(self) -> Tuple[str, str, str]:
         """Convert to format needed for questionary choices"""
         return (self.display_name, self.model_name, self.provider.value)
 
     def is_custom(self) -> bool:
-        """Check if the model is a Gemini model"""
-        return self.model_name == "-"
+        """Check if the model is a custom entry."""
+        return self.custom
 
     def has_json_mode(self) -> bool:
         """Check if the model supports JSON mode"""
+        if not self.supports_json_mode:
+            return False
         if self.is_deepseek() or self.is_gemini():
             return False
         # Only certain Ollama models support JSON mode
@@ -87,7 +95,9 @@ def load_models_from_json(json_path: str) -> List[LLMModel]:
             LLMModel(
                 display_name=model_data["display_name"],
                 model_name=model_data["model_name"],
-                provider=provider_enum
+                provider=provider_enum,
+                supports_json_mode=model_data.get("supports_json_mode", True),
+                custom=model_data.get("custom", False),
             )
         )
     return models
@@ -111,10 +121,62 @@ LLM_ORDER = [model.to_choice_tuple() for model in AVAILABLE_MODELS]
 OLLAMA_LLM_ORDER = [model.to_choice_tuple() for model in OLLAMA_MODELS]
 
 
-def get_model_info(model_name: str, model_provider: str) -> LLMModel | None:
+def _normalize_provider(model_provider: ModelProvider | str) -> ModelProvider:
+    if isinstance(model_provider, ModelProvider):
+        return model_provider
+    return ModelProvider(model_provider)
+
+
+def _get_api_setting(api_keys: dict | None, *keys: str, default: str | None = None) -> str | None:
+    for key in keys:
+        if not key:
+            continue
+        value = (api_keys or {}).get(key) or os.getenv(key)
+        if value:
+            return value
+    return default
+
+
+def _resolve_model_name(model_name: str, provider: ModelProvider, api_keys: dict | None) -> str:
+    if model_name and not model_name.startswith("__"):
+        return model_name
+
+    env_key_by_provider = {
+        ModelProvider.ANTHROPIC: "ANTHROPIC_MODEL",
+        ModelProvider.OPENAI_COMPATIBLE: "OPENAI_COMPATIBLE_MODEL",
+        ModelProvider.ANTHROPIC_COMPATIBLE: "ANTHROPIC_COMPATIBLE_MODEL",
+        ModelProvider.LM_STUDIO: "LM_STUDIO_MODEL",
+    }
+    env_key = env_key_by_provider.get(provider)
+    resolved_model_name = _get_api_setting(api_keys, env_key) if env_key else None
+    if resolved_model_name:
+        return resolved_model_name
+
+    raise ValueError(f"Custom model name not found for provider {provider.value}. Please configure a model name in the UI or set {env_key}.")
+
+
+def get_model_info(model_name: str, model_provider: ModelProvider | str) -> LLMModel | None:
     """Get model information by model_name"""
     all_models = AVAILABLE_MODELS + OLLAMA_MODELS
-    return next((model for model in all_models if model.model_name == model_name and model.provider == model_provider), None)
+    provider = _normalize_provider(model_provider)
+    exact_match = next((model for model in all_models if model.model_name == model_name and model.provider == provider), None)
+    if exact_match:
+        return exact_match
+
+    provider_custom_model = next((model for model in all_models if model.provider == provider and model.custom), None)
+    if provider_custom_model:
+        return provider_custom_model
+
+    if model_name:
+        return LLMModel(
+            display_name=model_name,
+            model_name=model_name,
+            provider=provider,
+            supports_json_mode=False,
+            custom=True,
+        )
+
+    return None
 
 
 def find_model_by_name(model_name: str) -> LLMModel | None:
@@ -135,42 +197,74 @@ def get_models_list():
     ]
 
 
-def get_model(model_name: str, model_provider: ModelProvider, api_keys: dict = None) -> ChatOpenAI | ChatGroq | ChatOllama | GigaChat | None:
-    if model_provider == ModelProvider.GROQ:
+def get_model(model_name: str, model_provider: ModelProvider | str, api_keys: dict = None) -> ChatOpenAI | ChatGroq | ChatOllama | GigaChat | OpenAICompatibleChatModel | AnthropicCompatibleChatModel | None:
+    provider = _normalize_provider(model_provider)
+    resolved_model_name = _resolve_model_name(model_name, provider, api_keys) if provider in {
+        ModelProvider.ANTHROPIC,
+        ModelProvider.OPENAI_COMPATIBLE,
+        ModelProvider.ANTHROPIC_COMPATIBLE,
+        ModelProvider.LM_STUDIO,
+    } else model_name
+
+    if provider == ModelProvider.GROQ:
         api_key = (api_keys or {}).get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
         if not api_key:
             # Print error to console
             print(f"API Key Error: Please make sure GROQ_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError("Groq API key not found.  Please make sure GROQ_API_KEY is set in your .env file or provided via API keys.")
-        return ChatGroq(model=model_name, api_key=api_key)
-    elif model_provider == ModelProvider.OPENAI:
+        return ChatGroq(model=resolved_model_name, api_key=api_key)
+    elif provider == ModelProvider.OPENAI:
         # Get and validate API key
-        api_key = (api_keys or {}).get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
-        base_url = os.getenv("OPENAI_API_BASE")
+        api_key = _get_api_setting(api_keys, "OPENAI_API_KEY")
+        base_url = _get_api_setting(api_keys, "OPENAI_API_BASE")
         if not api_key:
             # Print error to console
             print(f"API Key Error: Please make sure OPENAI_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError("OpenAI API key not found.  Please make sure OPENAI_API_KEY is set in your .env file or provided via API keys.")
-        return ChatOpenAI(model=model_name, api_key=api_key, base_url=base_url)
-    elif model_provider == ModelProvider.ANTHROPIC:
-        api_key = (api_keys or {}).get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+        return ChatOpenAI(model=resolved_model_name, api_key=api_key, base_url=base_url)
+    elif provider == ModelProvider.OPENAI_COMPATIBLE:
+        api_key = _get_api_setting(api_keys, "OPENAI_COMPATIBLE_API_KEY")
+        base_url = _get_api_setting(api_keys, "OPENAI_COMPATIBLE_BASE_URL")
+        if not base_url:
+            raise ValueError("OpenAI-compatible base URL not found. Please set OPENAI_COMPATIBLE_BASE_URL in settings or environment.")
+        return OpenAICompatibleChatModel(model=resolved_model_name, base_url=base_url, api_key=api_key)
+    elif provider == ModelProvider.LM_STUDIO:
+        api_key = _get_api_setting(api_keys, "LM_STUDIO_API_KEY", default="lm-studio")
+        base_url = _get_api_setting(api_keys, "LM_STUDIO_BASE_URL", default="http://127.0.0.1:1234/v1")
+        return OpenAICompatibleChatModel(model=resolved_model_name, base_url=base_url, api_key=api_key)
+    elif provider == ModelProvider.ANTHROPIC:
+        api_key = _get_api_setting(api_keys, "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+        base_url = _get_api_setting(api_keys, "ANTHROPIC_BASE_URL")
+        anthropic_model_override = _get_api_setting(api_keys, "ANTHROPIC_MODEL")
         if not api_key:
             print(f"API Key Error: Please make sure ANTHROPIC_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError("Anthropic API key not found.  Please make sure ANTHROPIC_API_KEY is set in your .env file or provided via API keys.")
-        return ChatAnthropic(model=model_name, api_key=api_key)
-    elif model_provider == ModelProvider.DEEPSEEK:
+        if base_url and anthropic_model_override:
+            resolved_model_name = anthropic_model_override
+        if base_url:
+            return AnthropicCompatibleChatModel(model=resolved_model_name, base_url=base_url, api_key=api_key)
+        return ChatAnthropic(model=resolved_model_name, api_key=api_key)
+    elif provider == ModelProvider.ANTHROPIC_COMPATIBLE:
+        api_key = _get_api_setting(api_keys, "ANTHROPIC_COMPATIBLE_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+        base_url = _get_api_setting(api_keys, "ANTHROPIC_COMPATIBLE_BASE_URL")
+        if not base_url:
+            raise ValueError("Anthropic-compatible base URL not found. Please set ANTHROPIC_COMPATIBLE_BASE_URL in settings or environment.")
+        if not api_key:
+            raise ValueError("Anthropic-compatible API key not found. Please set ANTHROPIC_COMPATIBLE_API_KEY in settings or environment.")
+        return AnthropicCompatibleChatModel(model=resolved_model_name, base_url=base_url, api_key=api_key)
+    elif provider == ModelProvider.DEEPSEEK:
         api_key = (api_keys or {}).get("DEEPSEEK_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
             print(f"API Key Error: Please make sure DEEPSEEK_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError("DeepSeek API key not found.  Please make sure DEEPSEEK_API_KEY is set in your .env file or provided via API keys.")
-        return ChatDeepSeek(model=model_name, api_key=api_key)
-    elif model_provider == ModelProvider.GOOGLE:
+        return ChatDeepSeek(model=resolved_model_name, api_key=api_key)
+    elif provider == ModelProvider.GOOGLE:
         api_key = (api_keys or {}).get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
             print(f"API Key Error: Please make sure GOOGLE_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError("Google API key not found.  Please make sure GOOGLE_API_KEY is set in your .env file or provided via API keys.")
-        return ChatGoogleGenerativeAI(model=model_name, api_key=api_key)
-    elif model_provider == ModelProvider.OLLAMA:
+        return ChatGoogleGenerativeAI(model=resolved_model_name, api_key=api_key)
+    elif provider == ModelProvider.OLLAMA:
         # For Ollama, we use a base URL instead of an API key
         # Check if OLLAMA_HOST is set (for Docker on macOS)
         ollama_host = os.getenv("OLLAMA_HOST", "localhost")
@@ -179,7 +273,7 @@ def get_model(model_name: str, model_provider: ModelProvider, api_keys: dict = N
             model=model_name,
             base_url=base_url,
         )
-    elif model_provider == ModelProvider.OPENROUTER:
+    elif provider == ModelProvider.OPENROUTER:
         api_key = (api_keys or {}).get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
         if not api_key:
             print(f"API Key Error: Please make sure OPENROUTER_API_KEY is set in your .env file or provided via API keys.")
@@ -190,7 +284,7 @@ def get_model(model_name: str, model_provider: ModelProvider, api_keys: dict = N
         site_name = os.getenv("YOUR_SITE_NAME", "AI Hedge Fund")
         
         return ChatOpenAI(
-            model=model_name,
+            model=resolved_model_name,
             openai_api_key=api_key,
             openai_api_base="https://openrouter.ai/api/v1",
             model_kwargs={
@@ -200,23 +294,23 @@ def get_model(model_name: str, model_provider: ModelProvider, api_keys: dict = N
                 }
             }
         )
-    elif model_provider == ModelProvider.XAI:
+    elif provider == ModelProvider.XAI:
         api_key = (api_keys or {}).get("XAI_API_KEY") or os.getenv("XAI_API_KEY")
         if not api_key:
             print(f"API Key Error: Please make sure XAI_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError("xAI API key not found. Please make sure XAI_API_KEY is set in your .env file or provided via API keys.")
-        return ChatXAI(model=model_name, api_key=api_key)
-    elif model_provider == ModelProvider.GIGACHAT:
+        return ChatXAI(model=resolved_model_name, api_key=api_key)
+    elif provider == ModelProvider.GIGACHAT:
         if os.getenv("GIGACHAT_USER") or os.getenv("GIGACHAT_PASSWORD"):
-            return GigaChat(model=model_name)
+            return GigaChat(model=resolved_model_name)
         else: 
             api_key = (api_keys or {}).get("GIGACHAT_API_KEY") or os.getenv("GIGACHAT_API_KEY") or os.getenv("GIGACHAT_CREDENTIALS")
             if not api_key:
                 print("API Key Error: Please make sure api_keys is set in your .env file or provided via API keys.")
                 raise ValueError("GigaChat API key not found. Please make sure GIGACHAT_API_KEY is set in your .env file or provided via API keys.")
 
-            return GigaChat(credentials=api_key, model=model_name)
-    elif model_provider == ModelProvider.AZURE_OPENAI:
+            return GigaChat(credentials=api_key, model=resolved_model_name)
+    elif provider == ModelProvider.AZURE_OPENAI:
         # Get and validate API key
         api_key = os.getenv("AZURE_OPENAI_API_KEY")
         if not api_key:

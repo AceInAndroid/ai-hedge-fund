@@ -3,7 +3,7 @@ import math
 from langchain_core.messages import HumanMessage
 
 from src.graph.state import AgentState, show_agent_reasoning
-from src.utils.api_key import get_api_key_from_state
+from src.utils.api_key import get_api_key_from_state, get_api_keys_from_state
 import json
 import pandas as pd
 import numpy as np
@@ -46,6 +46,7 @@ def technical_analyst_agent(state: AgentState, agent_id: str = "technical_analys
     end_date = data["end_date"]
     tickers = data["tickers"]
     api_key = get_api_key_from_state(state, "FINANCIAL_DATASETS_API_KEY")
+    api_keys = get_api_keys_from_state(state)
     # Initialize analysis for each ticker
     technical_analysis = {}
 
@@ -58,6 +59,7 @@ def technical_analyst_agent(state: AgentState, agent_id: str = "technical_analys
             start_date=start_date,
             end_date=end_date,
             api_key=api_key,
+            api_keys=api_keys,
         )
 
         if not prices:

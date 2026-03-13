@@ -22,7 +22,7 @@ export function Settings({ className }: SettingsProps) {
   const navigationItems: SettingsNavItem[] = [
     {
       id: 'api',
-      label: 'API Keys',
+      label: 'API Settings',
       icon: Key,
       description: 'API endpoints and authentication',
     },

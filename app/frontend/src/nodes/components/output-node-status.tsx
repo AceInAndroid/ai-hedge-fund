@@ -24,6 +24,7 @@ export function OutputNodeStatus({
   availableText = "View Output",
   idleText = "Idle"
 }: OutputNodeStatusProps) {
+  void isConnected;
   // Determine the current state and appropriate styling
   const isLocallyProcessing = isProcessing; // Connected agents are running
   const isGloballyProcessing = !isProcessing && isAnyAgentRunning; // Other agents running

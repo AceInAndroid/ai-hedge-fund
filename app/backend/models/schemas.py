@@ -17,6 +17,7 @@ class AgentModelConfig(BaseModel):
     agent_id: str
     model_name: Optional[str] = None
     model_provider: Optional[ModelProvider] = None
+    custom_model_name: Optional[str] = None
 
 
 class PortfolioPosition(BaseModel):
@@ -83,8 +84,9 @@ class BaseHedgeFundRequest(BaseModel):
                 # Check both unique node ID and base agent key for matches
                 config_base_key = extract_base_agent_key(config.agent_id)
                 if config.agent_id == agent_id or config_base_key == base_agent_key:
+                    resolved_model_name = config.custom_model_name or config.model_name or self.model_name
                     return (
-                        config.model_name or self.model_name,
+                        resolved_model_name,
                         config.model_provider or self.model_provider
                     )
         # Fallback to global model settings

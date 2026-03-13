@@ -227,10 +227,11 @@ class BacktestService:
         end_date_dt = datetime.strptime(self.end_date, "%Y-%m-%d")
         start_date_dt = end_date_dt - relativedelta(years=1)
         start_date_str = start_date_dt.strftime("%Y-%m-%d")
-        api_key = self.request.api_keys.get("FINANCIAL_DATASETS_API_KEY")
+        api_keys = getattr(self.request, "api_keys", None) or {}
+        api_key = api_keys.get("FINANCIAL_DATASETS_API_KEY")
 
         for ticker in self.tickers:
-            get_prices(ticker, start_date_str, self.end_date, api_key=api_key)
+            get_prices(ticker, start_date_str, self.end_date, api_key=api_key, api_keys=api_keys)
             get_financial_metrics(ticker, self.end_date, limit=10, api_key=api_key)
             get_insider_trades(ticker, self.end_date, start_date=self.start_date, limit=1000, api_key=api_key)
             get_company_news(ticker, self.end_date, start_date=self.start_date, limit=1000, api_key=api_key)
@@ -336,7 +337,12 @@ class BacktestService:
 
                 for ticker in self.tickers:
                     try:
-                        price_data = get_price_data(ticker, previous_date_str, current_date_str)
+                        price_data = get_price_data(
+                            ticker,
+                            previous_date_str,
+                            current_date_str,
+                            api_keys=getattr(self.request, "api_keys", None),
+                        )
                         if price_data.empty:
                             missing_data = True
                             break
