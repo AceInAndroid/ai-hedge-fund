@@ -61,7 +61,7 @@ Before you can run the AI Hedge Fund, install the Python and frontend dependenci
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/virattt/ai-hedge-fund.git
+git clone https://github.com/AceInAndroid/ai-hedge-fund.git
 cd ai-hedge-fund
 ```
 
@@ -555,7 +555,7 @@ You can still find app-specific details in [app/README.md](./app/README.md).
 
 ## Feature Requests
 
-If you have a feature request, please open an [issue](https://github.com/virattt/ai-hedge-fund/issues) and make sure it is tagged with `enhancement`.
+If you have a feature request, please open an [issue](https://github.com/AceInAndroid/ai-hedge-fund/issues) and make sure it is tagged with `enhancement`.
 
 ## License
 

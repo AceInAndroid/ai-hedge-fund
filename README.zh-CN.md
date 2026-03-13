@@ -62,7 +62,7 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/virattt/ai-hedge-fund.git
+git clone https://github.com/AceInAndroid/ai-hedge-fund.git
 cd ai-hedge-fund
 ```
 
@@ -549,7 +549,7 @@ npm run dev
 
 ## 功能需求
 
-如果你有新功能建议，请在 [Issues](https://github.com/virattt/ai-hedge-fund/issues) 中提交，并标注 `enhancement`。
+如果你有新功能建议，请在 [Issues](https://github.com/AceInAndroid/ai-hedge-fund/issues) 中提交，并标注 `enhancement`。
 
 ## 许可证
 
