@@ -219,6 +219,30 @@ TUSHARE_TOKEN=your-tushare-token
 
 修改完 `.env` 后，记得保存文件，并重新启动命令行任务或 Web 后端，这样新配置才会生效。
 
+### 3.2 直接把外部数据塞给 CLI
+
+如果外部系统已经准备好了详细行情、财务或新闻数据，可以直接把这些数据文件传给脚本，避免再次联网抓取。
+
+使用：
+
+```bash
+--data-file ./sample-data.json
+```
+
+如果你希望完全禁止外部抓取，只使用注入的数据，再加上：
+
+```bash
+--data-only
+```
+
+示例：
+
+```bash
+bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
+这个 JSON 文件里可以按 ticker 提供 `prices`、`financial_metrics`、`line_items`、`company_news`、`insider_trades`、`market_cap`。完整格式见 [references/preloaded-data.md](./references/preloaded-data.md)。
+
 ### 3.1 CLI 如何选择模型
 
 现在命令行不会再先让你从一大串内置模型列表里选。
@@ -331,6 +355,12 @@ poetry run python src/main.py --ticker AAPL,MSFT,NVDA
 
 CLI 会自动使用 `qwen3.5-plus`。
 
+如果要直接使用外部准备好的数据：
+
+```bash
+bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
 #### 分析 A 股
 
 ```bash
@@ -369,6 +399,12 @@ poetry run python src/backtester.py --ticker AAPL,MSFT,NVDA
 
 ```bash
 poetry run python src/main.py --ticker AAPL,MSFT,NVDA --model-provider anthropic --model qwen3.5-plus
+```
+
+直接注入数据示例：
+
+```bash
+bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
 ```
 
 ### 🖥️ Web 应用

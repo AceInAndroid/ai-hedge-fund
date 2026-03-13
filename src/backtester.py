@@ -8,6 +8,7 @@ from src.backtesting.types import PerformanceMetrics
 from src.cli.input import (
     parse_cli_inputs,
 )
+from src.tools.preloaded_data import clear_preloaded_data, load_preloaded_data_file
 
 
 def run_backtest(backtester: BacktestEngine) -> PerformanceMetrics | None:
@@ -48,6 +49,10 @@ if __name__ == "__main__":
         include_graph_flag=False,
         include_reasoning_flag=False,
     )
+
+    clear_preloaded_data()
+    if inputs.data_file:
+        load_preloaded_data_file(inputs.data_file, data_only=inputs.data_only)
 
     # Create and run the backtester
     backtester = BacktestEngine(

@@ -23,6 +23,15 @@ from src.tools.a_share_data import (
     get_configured_price_data_sources,
     is_a_share_ticker,
 )
+from src.tools.preloaded_data import (
+    get_preloaded_company_news,
+    get_preloaded_financial_metrics,
+    get_preloaded_insider_trades,
+    get_preloaded_line_items,
+    get_preloaded_market_cap,
+    get_preloaded_prices,
+    is_data_only_mode,
+)
 
 # Global cache instance
 _cache = get_cache()
@@ -82,6 +91,12 @@ def _get_prices_from_financial_datasets(ticker: str, start_date: str, end_date: 
 
 def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None, api_keys: dict | None = None) -> list[Price]:
     """Fetch price data from cache or API."""
+    found_preloaded, preloaded_prices = get_preloaded_prices(ticker, start_date, end_date)
+    if found_preloaded:
+        return preloaded_prices
+    if is_data_only_mode():
+        return []
+
     configured_sources = get_configured_price_data_sources(api_keys)
     cache_key = f"{ticker}_{start_date}_{end_date}_{'_'.join(configured_sources)}"
     
@@ -117,6 +132,12 @@ def get_financial_metrics(
     api_key: str = None,
 ) -> list[FinancialMetrics]:
     """Fetch financial metrics from cache or API."""
+    found_preloaded, preloaded_metrics = get_preloaded_financial_metrics(ticker, end_date, period, limit)
+    if found_preloaded:
+        return preloaded_metrics
+    if is_data_only_mode():
+        return []
+
     # Create a cache key that includes all parameters to ensure exact matches
     cache_key = f"{ticker}_{period}_{end_date}_{limit}"
     
@@ -159,6 +180,12 @@ def search_line_items(
     api_key: str = None,
 ) -> list[LineItem]:
     """Fetch line items from API."""
+    found_preloaded, preloaded_line_items = get_preloaded_line_items(ticker, end_date, period, limit)
+    if found_preloaded:
+        return preloaded_line_items
+    if is_data_only_mode():
+        return []
+
     # If not in cache or insufficient data, fetch from API
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
@@ -199,6 +226,12 @@ def get_insider_trades(
     api_key: str = None,
 ) -> list[InsiderTrade]:
     """Fetch insider trades from cache or API."""
+    found_preloaded, preloaded_trades = get_preloaded_insider_trades(ticker, start_date, end_date, limit)
+    if found_preloaded:
+        return preloaded_trades
+    if is_data_only_mode():
+        return []
+
     # Create a cache key that includes all parameters to ensure exact matches
     cache_key = f"{ticker}_{start_date or 'none'}_{end_date}_{limit}"
     
@@ -264,6 +297,12 @@ def get_company_news(
     api_key: str = None,
 ) -> list[CompanyNews]:
     """Fetch company news from cache or API."""
+    found_preloaded, preloaded_news = get_preloaded_company_news(ticker, start_date, end_date, limit)
+    if found_preloaded:
+        return preloaded_news
+    if is_data_only_mode():
+        return []
+
     # Create a cache key that includes all parameters to ensure exact matches
     cache_key = f"{ticker}_{start_date or 'none'}_{end_date}_{limit}"
     
@@ -327,6 +366,12 @@ def get_market_cap(
     api_key: str = None,
 ) -> float | None:
     """Fetch market cap from the API."""
+    found_preloaded, preloaded_market_cap = get_preloaded_market_cap(ticker)
+    if found_preloaded:
+        return preloaded_market_cap
+    if is_data_only_mode():
+        return None
+
     if is_a_share_ticker(ticker):
         return None
 

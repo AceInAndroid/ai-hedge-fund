@@ -20,10 +20,22 @@ With explicit model override:
 bash scripts/run-analysis.sh AAPL,MSFT,NVDA --model-provider anthropic --model qwen3.5-plus
 ```
 
+With externally prepared data:
+
+```bash
+bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
 ## Run a backtest
 
 ```bash
 bash scripts/run-backtest.sh AAPL,MSFT,NVDA --start-date 2024-01-01 --end-date 2024-03-01
+```
+
+Backtest with externally prepared data:
+
+```bash
+bash scripts/run-backtest.sh 600519.SH,000001.SZ --start-date 2025-01-01 --end-date 2025-12-31 --data-file ./sample-data.json --data-only
 ```
 
 ## Start the web app

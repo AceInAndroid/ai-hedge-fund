@@ -15,6 +15,7 @@ from src.utils.visualize import save_graph_as_png
 from src.cli.input import (
     parse_cli_inputs,
 )
+from src.tools.preloaded_data import clear_preloaded_data, load_preloaded_data_file
 
 import argparse
 from datetime import datetime
@@ -138,6 +139,10 @@ if __name__ == "__main__":
         include_graph_flag=True,
         include_reasoning_flag=True,
     )
+
+    clear_preloaded_data()
+    if inputs.data_file:
+        load_preloaded_data_file(inputs.data_file, data_only=inputs.data_only)
 
     tickers = inputs.tickers
     selected_analysts = inputs.selected_analysts

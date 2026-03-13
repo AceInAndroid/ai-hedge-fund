@@ -107,6 +107,17 @@ def add_common_args(
         required=False,
         help="Model name to use. If omitted, CLI will use the configured *_MODEL value from .env or prompt for a custom model name.",
     )
+    parser.add_argument(
+        "--data-file",
+        type=str,
+        required=False,
+        help="Path to a JSON file containing preloaded market/fundamental data. When provided, the app will read from this file before making external data requests.",
+    )
+    parser.add_argument(
+        "--data-only",
+        action="store_true",
+        help="Use only the preloaded data supplied by --data-file and skip all external data fetching.",
+    )
     return parser
 
 
@@ -378,6 +389,8 @@ class CLIInputs:
     end_date: str
     initial_cash: float
     margin_requirement: float
+    data_file: str | None = None
+    data_only: bool = False
     show_reasoning: bool = False
     show_agent_graph: bool = False
     raw_args: Optional[argparse.Namespace] = None
@@ -443,8 +456,9 @@ def parse_cli_inputs(
         end_date=end_date,
         initial_cash=getattr(args, "initial_cash", 100000.0),
         margin_requirement=getattr(args, "margin_requirement", 0.0),
+        data_file=getattr(args, "data_file", None),
+        data_only=getattr(args, "data_only", False),
         show_reasoning=getattr(args, "show_reasoning", False),
         show_agent_graph=getattr(args, "show_agent_graph", False),
         raw_args=args,
     )
-

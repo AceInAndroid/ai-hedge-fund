@@ -6,3 +6,4 @@ When working in this repo:
 - prefer the bundled `scripts/` commands for execution
 - open `references/configuration.md` for env and provider setup
 - open `references/workflows.md` for run commands and troubleshooting
+- open `references/preloaded-data.md` only when the task uses `--data-file` or `--data-only`

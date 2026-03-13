@@ -7,6 +7,7 @@ if [ $# -lt 1 ]; then
   echo "Usage: bash scripts/run-analysis.sh <tickers> [extra args...]"
   echo "Example: bash scripts/run-analysis.sh AAPL,MSFT,NVDA"
   echo "Example: bash scripts/run-analysis.sh 600519.SH,000001.SZ --analysts-all"
+  echo "Example: bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only"
   exit 1
 fi
 

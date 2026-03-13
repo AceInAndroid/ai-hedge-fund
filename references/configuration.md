@@ -59,3 +59,21 @@ TUSHARE_TOKEN=your-tushare-token
 - If only one provider is configured, it is auto-selected.
 - If the provider has no configured `*_MODEL`, the CLI prompts for a model name.
 - `--model-provider` and `--model` override `.env` for a single run.
+
+## Direct data injection
+
+If external data is already available, use:
+
+```bash
+--data-file /absolute/or/relative/path/to/data.json
+```
+
+Add:
+
+```bash
+--data-only
+```
+
+when you want to prevent all external data fetching.
+
+See `references/preloaded-data.md` for the exact JSON schema.

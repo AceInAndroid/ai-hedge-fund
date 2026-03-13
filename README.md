@@ -222,6 +222,32 @@ TUSHARE_TOKEN=your-tushare-token
 
 After editing `.env`, save the file and restart the CLI command or web backend so the new values are loaded.
 
+### 3.2 Directly Inject External Data Into CLI
+
+If another system already prepared detailed market or fundamental data, you can pass it directly to the scripts and skip repeated fetching.
+
+Use:
+
+```bash
+--data-file ./sample-data.json
+```
+
+Add:
+
+```bash
+--data-only
+```
+
+when you want to disable all external fetching and use only the supplied file.
+
+Example:
+
+```bash
+bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
+The JSON file can contain per-ticker `prices`, `financial_metrics`, `line_items`, `company_news`, `insider_trades`, and `market_cap`. See the skill reference file [references/preloaded-data.md](./references/preloaded-data.md) for the full schema.
+
 ### 3.1 How CLI Model Selection Works
 
 The CLI no longer requires you to choose from a built-in model catalog first.
@@ -334,6 +360,12 @@ poetry run python src/main.py --ticker AAPL,MSFT,NVDA
 
 CLI will use `qwen3.5-plus` automatically.
 
+With external preloaded data:
+
+```bash
+bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
 #### Analyze A-Share Tickers
 
 ```bash
@@ -372,6 +404,12 @@ Example override:
 
 ```bash
 poetry run python src/main.py --ticker AAPL,MSFT,NVDA --model-provider anthropic --model qwen3.5-plus
+```
+
+Example with direct injected data:
+
+```bash
+bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
 ```
 
 ### 🖥️ Web Application

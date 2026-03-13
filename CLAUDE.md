@@ -5,6 +5,7 @@ Recommended load order:
 1. `SKILL.md`
 2. `references/configuration.md`
 3. `references/workflows.md`
+4. `references/preloaded-data.md` only for direct data injection tasks
 
 Execution preference:
 
