@@ -1,5 +1,19 @@
 # Workflow Reference
 
+## List agent capabilities
+
+Human-readable:
+
+```bash
+bash scripts/list-agents.sh
+```
+
+Machine-readable:
+
+```bash
+bash scripts/list-agents.sh --format json
+```
+
 ## Analyze tickers from CLI
 
 US tickers:
@@ -18,6 +32,12 @@ With explicit model override:
 
 ```bash
 bash scripts/run-analysis.sh AAPL,MSFT,NVDA --model-provider anthropic --model qwen3.5-plus
+```
+
+With explicit analyst selection:
+
+```bash
+bash scripts/run-analysis.sh KO,AXP --analysts ben_graham,warren_buffett,valuation_analyst
 ```
 
 With externally prepared data:

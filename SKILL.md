@@ -1,6 +1,6 @@
 ---
 name: "ai-hedge-fund"
-description: "Use when working in this repository to run or modify the AI hedge fund system, configure compatible LLM providers, run analysis or backtests, inject external ticker data directly into the CLI, or extend the A-share data-source stack."
+description: "Use when working in this repository to inspect agent capabilities, configure compatible LLM providers, run analysis or backtests, inject external ticker data directly into the CLI, or extend the A-share data-source stack."
 ---
 
 # AI Hedge Fund Skill
@@ -8,6 +8,7 @@ description: "Use when working in this repository to run or modify the AI hedge 
 Use this skill when the task is repository-local and involves any of these:
 
 - configure LLM providers, base URLs, API keys, or custom model names
+- inspect which analyst or system agent fits a task
 - run CLI analysis, backtests, or web flows from this repo
 - inject upstream-prepared market/fundamental/news data instead of fetching again
 - extend A-share data-source fallbacks or compatible transport logic
@@ -23,6 +24,7 @@ Read only the reference file needed for the current task:
 
 - provider or `.env` setup: `references/configuration.md`
 - run flow, validation, or troubleshooting: `references/workflows.md`
+- agent catalog and selection guidance: `references/agents.md`
 - injected JSON payload shape: `references/preloaded-data.md`
 
 ## Quick start
@@ -69,6 +71,13 @@ Validation:
 bash scripts/validate.sh
 ```
 
+Agent catalog:
+
+```bash
+bash scripts/list-agents.sh
+bash scripts/list-agents.sh --format json
+```
+
 ## Task routing
 
 - Configure providers or fix `.env`: use `scripts/skill-setup.sh`, then open `references/configuration.md`.
@@ -77,6 +86,7 @@ bash scripts/validate.sh
 - Start the full web app: use `scripts/run-web.sh`.
 - Start backend/frontend separately: use `scripts/run-backend.sh` and `scripts/run-frontend.sh`.
 - Validate Python and frontend state after edits: use `scripts/validate.sh`.
+- Explain which analyst or system agent does what: use `scripts/list-agents.sh`, then open `references/agents.md` if needed.
 - Inject external data: keep execution on `run-analysis.sh` or `run-backtest.sh`, and add `--data-file`.
 
 ## Model/provider behavior
@@ -133,6 +143,7 @@ Open only what you need:
 - provider setup and `.env` behavior: `references/configuration.md`
 - run flows and troubleshooting: `references/workflows.md`
 - injected data schema: `references/preloaded-data.md`
+- agent capability catalog and selection guidance: `references/agents.md`
 
 ## Guardrails
 

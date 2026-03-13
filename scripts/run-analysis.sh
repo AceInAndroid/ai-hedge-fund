@@ -5,7 +5,9 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [ $# -lt 1 ]; then
   echo "Usage: bash scripts/run-analysis.sh <tickers> [extra args...]"
+  echo "Example: bash scripts/list-agents.sh"
   echo "Example: bash scripts/run-analysis.sh AAPL,MSFT,NVDA"
+  echo "Example: bash scripts/run-analysis.sh KO,AXP --analysts ben_graham,warren_buffett,valuation_analyst"
   echo "Example: bash scripts/run-analysis.sh 600519.SH,000001.SZ --analysts-all"
   echo "Example: bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only"
   exit 1

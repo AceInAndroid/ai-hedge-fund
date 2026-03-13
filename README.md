@@ -336,6 +336,26 @@ You can run the AI Hedge Fund directly from the terminal for research, scripting
 
 <img width="992" alt="Screenshot 2025-01-06 at 5 50 17 PM" src="https://github.com/user-attachments/assets/e8ca04bf-9989-4a7d-a8b4-34e04666663b" />
 
+#### List Available Agents and Capabilities
+
+Before selecting analysts, you can inspect the built-in capability catalog:
+
+```bash
+bash scripts/list-agents.sh
+```
+
+For JSON output that another controller or script can consume:
+
+```bash
+bash scripts/list-agents.sh --format json
+```
+
+This catalog includes:
+
+- selectable analyst agents
+- always-on system agents such as `risk_manager` and `portfolio_manager`
+- each agent's strategy family, best-fit use case, A-share readiness, and data requirements
+
 #### Analyze Tickers
 
 ```bash
@@ -410,6 +430,12 @@ Example with direct injected data:
 
 ```bash
 bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
+Example with explicit analyst selection:
+
+```bash
+bash scripts/run-analysis.sh KO,AXP --analysts ben_graham,warren_buffett,valuation_analyst
 ```
 
 ### 🖥️ Web Application

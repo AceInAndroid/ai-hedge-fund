@@ -331,6 +331,26 @@ TUSHARE_TOKEN=your-tushare-token
 
 <img width="992" alt="Screenshot 2025-01-06 at 5 50 17 PM" src="https://github.com/user-attachments/assets/e8ca04bf-9989-4a7d-a8b4-34e04666663b" />
 
+#### 查看可用 Agent 和能力目录
+
+在选择分析师之前，可以先查看项目内置的 agent 能力目录：
+
+```bash
+bash scripts/list-agents.sh
+```
+
+如果要给外部控制器、脚本或其他 agent 使用，可以输出 JSON：
+
+```bash
+bash scripts/list-agents.sh --format json
+```
+
+这个目录会暴露：
+
+- 可选择的 analyst agents
+- 始终参与流程的 system agents，例如 `risk_manager` 和 `portfolio_manager`
+- 每个 agent 的策略类型、适用场景、A 股适配度和数据依赖
+
 #### 分析股票
 
 ```bash
@@ -405,6 +425,12 @@ poetry run python src/main.py --ticker AAPL,MSFT,NVDA --model-provider anthropic
 
 ```bash
 bash scripts/run-analysis.sh 600519.SH,000001.SZ --data-file ./sample-data.json --data-only
+```
+
+指定分析师示例：
+
+```bash
+bash scripts/run-analysis.sh KO,AXP --analysts ben_graham,warren_buffett,valuation_analyst
 ```
 
 ### 🖥️ Web 应用
