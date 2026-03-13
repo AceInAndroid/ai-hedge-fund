@@ -68,7 +68,31 @@ cd ai-hedge-fund
 
 ### 2. 安装 Python 依赖
 
-项目使用 Poetry，建议 Python 版本为 `3.11`。
+项目使用 Poetry，支持 Python `3.11` 和 `3.12`，推荐优先使用 `3.11`。
+
+如果本机还没有安装 Python，一个比较直接的方式是使用 `pyenv`。
+
+先安装 `pyenv`：
+
+```bash
+brew install pyenv
+```
+
+安装 Python `3.11`：
+
+```bash
+pyenv install 3.11.11
+pyenv local 3.11.11
+python3 --version
+```
+
+安装 Python `3.12`：
+
+```bash
+pyenv install 3.12.9
+pyenv local 3.12.9
+python3 --version
+```
 
 如果本机还没有安装 Poetry，可以先执行：
 
@@ -85,6 +109,7 @@ export PATH="$HOME/.local/bin:$PATH"
 然后再安装项目依赖：
 
 ```bash
+poetry env use python3
 poetry install
 ```
 

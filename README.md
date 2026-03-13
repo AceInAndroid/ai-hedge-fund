@@ -67,7 +67,31 @@ cd ai-hedge-fund
 
 ### 2. Install Python Dependencies
 
-This project uses Poetry and targets Python `3.11`.
+This project uses Poetry and supports Python `3.11` and `3.12`. The recommended version is `3.11`.
+
+If Python is not installed yet, one practical way is to install it with `pyenv`.
+
+Install `pyenv` first:
+
+```bash
+brew install pyenv
+```
+
+Install Python `3.11`:
+
+```bash
+pyenv install 3.11.11
+pyenv local 3.11.11
+python3 --version
+```
+
+Install Python `3.12`:
+
+```bash
+pyenv install 3.12.9
+pyenv local 3.12.9
+python3 --version
+```
 
 If `poetry` is not installed yet, install it first:
 
@@ -84,6 +108,7 @@ export PATH="$HOME/.local/bin:$PATH"
 Then install project dependencies:
 
 ```bash
+poetry env use python3
 poetry install
 ```
 
