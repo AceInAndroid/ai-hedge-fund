@@ -69,9 +69,29 @@ cd ai-hedge-fund
 
 This project uses Poetry and targets Python `3.11`.
 
+If `poetry` is not installed yet, install it first:
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+If the shell still cannot find `poetry`, add Poetry to your `PATH` and reopen the terminal:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Then install project dependencies:
+
 ```bash
 poetry install
 ```
+
+If `poetry install` fails, check these common issues first:
+
+- `poetry: command not found`: install Poetry with the command above, then reopen the terminal.
+- Python version mismatch: make sure `python3 --version` is compatible with this project.
+- Broken environment from an earlier install: try `poetry env remove --all` and then run `poetry install` again.
 
 ### 3. Install Frontend Dependencies
 

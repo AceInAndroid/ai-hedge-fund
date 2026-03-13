@@ -70,9 +70,29 @@ cd ai-hedge-fund
 
 项目使用 Poetry，建议 Python 版本为 `3.11`。
 
+如果本机还没有安装 Poetry，可以先执行：
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+如果安装后终端仍然提示找不到 `poetry`，请把 Poetry 加到 `PATH`，然后重新打开终端：
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+然后再安装项目依赖：
+
 ```bash
 poetry install
 ```
+
+如果 `poetry install` 失败，优先检查这几类问题：
+
+- `poetry: command not found`：先按上面的命令安装 Poetry，然后重新打开终端。
+- Python 版本不匹配：先用 `python3 --version` 确认版本是否符合项目要求。
+- 之前安装残留导致环境损坏：可以先执行 `poetry env remove --all`，再重新运行 `poetry install`。
 
 ### 3. 安装前端依赖
 
